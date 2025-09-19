@@ -1,0 +1,26 @@
+{
+  "canisters": {
+    "journal_backend": {
+      "main": "src/journal_backend/main.mo",
+      "type": "motoko"
+    },
+    "journal_frontend": {
+      "dependencies": [
+        "journal_backend"
+      ],
+      "source": [
+        "src/journal_frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "journal_frontend"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
