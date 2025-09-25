@@ -1,18 +1,23 @@
 {
+  "name": "journal",
+  "type": "module",
+  "workspaces": [
+    "src/journal_frontend"
+  ],
+"scripts": {
+  "dev": "npm run dev --workspace journal_frontend",
+  "start": "npm run start --workspaces --if-present",
+  "build": "npm run build --workspaces --if-present",
+  "prebuild": "npm run prebuild --workspaces --if-present",
+  "deploy": "dfx deploy && npm run update-env",
+  "deploy:ic": "npm run build && dfx deploy --network ic",
+  "update-env": "node scripts/update-env.js"
+},
   "engines": {
     "node": ">=16.0.0",
     "npm": ">=7.0.0"
   },
-  "name": "journal",
-  "scripts": {
-    "build": "npm run build --workspaces --if-present",
-    "prebuild": "npm run prebuild --workspaces --if-present",
-    "pretest": "npm run prebuild --workspaces --if-present",
-    "start": "npm start --workspaces --if-present",
-    "test": "npm test --workspaces --if-present"
-  },
-  "type": "module",
-  "workspaces": [
-    "src/journal_frontend"
-  ]
+  "devDependencies": {
+    "@types/node": "^24.5.2"
+  }
 }

@@ -1,0 +1,8 @@
+# Production (mainnet) config
+VITE_DFX_NETWORK=ic
+VITE_IC_HOST=https://ic0.app
+VITE_II_URL=https://id.ai/#authorize
+
+# Canister IDs (mainnet, fixed after your first deploy)
+VITE_CANISTER_ID_JOURNAL_BACKEND=2ud2m-vaaaa-aaaah-qqfva-cai
+VITE_CANISTER_ID_JOURNAL_FRONTEND=2tc4y-yyaaa-aaaah-qqfvq-cai

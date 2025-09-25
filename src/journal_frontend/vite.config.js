@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import environment from 'vite-plugin-environment';
 import dotenv from 'dotenv';
+import path from 'path';
 
 dotenv.config({ path: '../../.env' });
 
@@ -11,6 +12,13 @@ export default defineConfig({
     emptyOutDir: true,
   },
   optimizeDeps: {
+    include: [
+      "@dfinity/agent",
+      "@dfinity/principal",
+      "@dfinity/candid",
+      "@dfinity/auth-client",
+      "@dfinity/identity",
+    ],
     esbuildOptions: {
       define: {
         global: "globalThis",
@@ -20,10 +28,13 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:4943",
+        target: process.env.VITE_IC_HOST || 'http://127.0.0.1:4943',
         changeOrigin: true,
-      },
+        secure: false
+      }
     },
+    host: '127.0.0.1',
+    port: 3000
   },
   plugins: [
     react(),
@@ -37,6 +48,10 @@ export default defineConfig({
         replacement: fileURLToPath(
           new URL("../declarations", import.meta.url)
         ),
+      },
+      {
+        find: "@",
+        replacement: path.resolve(__dirname, "./src"),
       },
     ],
   },

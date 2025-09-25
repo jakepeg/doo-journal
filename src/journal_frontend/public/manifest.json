@@ -1,0 +1,78 @@
+{
+  "name": "My Journal - Kids Journaling App",
+  "short_name": "My Journal",
+  "description": "A magical place for kids to write, dream, and grow! Create your personal journal with privacy controls.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3e8ff",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait-primary",
+  "categories": ["education", "lifestyle", "productivity"],
+  "lang": "en",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzIiIGhlaWdodD0iNzIiIHZpZXdCb3g9IjAgMCA3MiA3MiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjcyIiBoZWlnaHQ9IjcyIiByeD0iMTYiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xXzEpIi8+CjxwYXRoIGQ9Ik0zNiAyMEM0MS41MjI4IDIwIDQ2IDI0LjQ3NzIgNDYgMzBWNDJDNDYgNDcuNTIyOCA0MS41MjI4IDUyIDM2IDUyQzMwLjQ3NzIgNTIgMjYgNDcuNTIyOCAyNiA0MlYzMEMyNiAyNC40NzcyIDMwLjQ3NzIgMjAgMzYgMjBaIiBmaWxsPSJ3aGl0ZSIvPgo8Y2lyY2xlIGN4PSIzNiIgY3k9IjMwIiByPSI0IiBmaWxsPSIjOGI1Y2Y2Ii8+CjxjaXJjbGUgY3g9IjM2IiBjeT0iNDIiIHI9IjQiIGZpbGw9IiM4YjVjZjYiLz4KPHN2ZyBpZD0iZ3JhZGllbnQwX2xpbmVhcl8xXzEiPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfbGluZWFyXzFfMSIgeDE9IjAiIHkxPSIwIiB4Mj0iNzIiIHkyPSI3MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjOGI1Y2Y2Ii8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzM5OGVmNyIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo8L3N2Zz4K",
+      "sizes": "72x72",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMjAiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xXzEpIi8+CjxwYXRoIGQ9Ik00OCAyNkM1NC42Mjc0IDI2IDYwIDMxLjM3MjYgNjAgMzhWNThDNjAgNjQuNjI3NCA1NC42Mjc0IDcwIDQ4IDcwQzQxLjM3MjYgNzAgMzYgNjQuNjI3NCAzNiA1OFYzOEMzNiAzMS4zNzI2IDQxLjM3MjYgMjYgNDggMjZaIiBmaWxsPSJ3aGl0ZSIvPgo8Y2lyY2xlIGN4PSI0OCIgY3k9IjM4IiByPSI2IiBmaWxsPSIjOGI1Y2Y2Ii8+CjxjaXJjbGUgY3g9IjQ4IiBjeT0iNTgiIHI9IjYiIGZpbGw9IiM4YjVjZjYiLz4KPHN2ZyBpZD0iZ3JhZGllbnQwX2xpbmVhcl8xXzEiPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfbGluZWFyXzFfMSIgeDE9IjAiIHkxPSIwIiB4Mj0iOTYiIHkyPSI5NiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjOGI1Y2Y2Ii8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzM5OGVmNyIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo8L3N2Zz4K",
+      "sizes": "96x96",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiByeD0iMjgiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xXzEpIi8+CjxwYXRoIGQ9Ik02NCAzNEM3Mi44MzY2IDM0IDgwIDQxLjE2MzQgODAgNTBWNzhDODAgODYuODM2NiA3Mi44MzY2IDk0IDY0IDk0QzU1LjE2MzQgOTQgNDggODYuODM2NiA0OCA3OFY1MEM0OCA0MS4xNjM0IDU1LjE2MzQgMzQgNjQgMzRaIiBmaWxsPSJ3aGl0ZSIvPgo8Y2lyY2xlIGN4PSI2NCIgY3k9IjUwIiByPSI4IiBmaWxsPSIjOGI1Y2Y2Ii8+CjxjaXJjbGUgY3g9IjY0IiBjeT0iNzgiIHI9IjgiIGZpbGw9IiM4YjVjZjYiLz4KPHN2ZyBpZD0iZ3JhZGllbnQwX2xpbmVhcl8xXzEiPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfbGluZWFyXzFfMSIgeDE9IjAiIHkxPSIwIiB4Mj0iMTI4IiB5Mj0iMTI4IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiM4YjVjZjYiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMzk4ZWY3Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+Cjwvc3ZnPgo=",
+      "sizes": "128x128",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQ0IiBoZWlnaHQ9IjE0NCIgdmlld0JveD0iMCAwIDE0NCAxNDQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNDQiIGhlaWdodD0iMTQ0IiByeD0iMzIiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xXzEpIi8+CjxwYXRoIGQ9Ik03MiAzOEM4MS45NDExIDM4IDkwIDQ2LjA1ODkgOTAgNTZWODhDOTAgOTcuOTQxMSA4MS45NDExIDEwNiA3MiAxMDZDNjIuMDU4OSAxMDYgNTQgOTcuOTQxMSA1NCA4OFY1NkM1NCA0Ni4wNTg5IDYyLjA1ODkgMzggNzIgMzhaIiBmaWxsPSJ3aGl0ZSIvPgo8Y2lyY2xlIGN4PSI3MiIgY3k9IjU2IiByPSI5IiBmaWxsPSIjOGI1Y2Y2Ii8+CjxjaXJjbGUgY3g9IjcyIiBjeT0iODgiIHI9IjkiIGZpbGw9IiM4YjVjZjYiLz4KPHN2ZyBpZD0iZ3JhZGllbnQwX2xpbmVhcl8xXzEiPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfbGluZWFyXzFfMSIgeDE9IjAiIHkxPSIwIiB4Mj0iMTQ0IiB5Mj0iMTQ0IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiM4YjVjZjYiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMzk4ZWY3Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+Cjwvc3ZnPgo=",
+      "sizes": "144x144",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUyIiBoZWlnaHQ9IjE1MiIgdmlld0JveD0iMCAwIDE1MiAxNTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTIiIGhlaWdodD0iMTUyIiByeD0iMzQiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xXzEpIi8+CjxwYXRoIGQ9Ik03NiA0MEM4NS4zODg0IDQwIDkzIDQ3LjYxMTYgOTMgNTdWOTVDOTMgMTA0LjM4OCA4NS4zODg0IDExMiA3NiAxMTJDNjYuNjExNiAxMTIgNTkgMTA0LjM4OCA1OSA5NVY1N0M1OSA0Ny42MTE2IDY2LjYxMTYgNDAgNzYgNDBaIiBmaWxsPSJ3aGl0ZSIvPgo8Y2lyY2xlIGN4PSI3NiIgY3k9IjU3IiByPSIxMCIgZmlsbD0iIzhiNWNmNiIvPgo8Y2lyY2xlIGN4PSI3NiIgY3k9Ijk1IiByPSIxMCIgZmlsbD0iIzhiNWNmNiIvPgo8c3ZnIGlkPSJncmFkaWVudDBfbGluZWFyXzFfMSI+CjxkZWZzPgo8bGluZWFyR3JhZGllbnQgaWQ9ImdyYWRpZW50MF9saW5lYXJfMV8xIiB4MT0iMCIgeTE9IjAiIHgyPSIxNTIiIHkyPSIxNTIiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzhiNWNmNiIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMzOThlZjciLz4KPC9saW5lYXJHcmFkaWVudD4KPC9kZWZzPgo8L3N2Zz4KPC9zdmc+Cg==",
+      "sizes": "152x152",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iNDAiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xXzEpIi8+CjxwYXRoIGQ9Ik05NiA1MkMxMDkuMjU1IDUyIDEyMCA2Mi43NDUyIDEyMCA3NlYxMTZDMTIwIDEyOS4yNTUgMTA5LjI1NSAxNDAgOTYgMTQwQzgyLjc0NTIgMTQwIDcyIDEyOS4yNTUgNzIgMTE2Vjc2QzcyIDYyLjc0NTIgODIuNzQ1MiA1MiA5NiA1MloiIGZpbGw9IndoaXRlIi8+CjxjaXJjbGUgY3g9Ijk2IiBjeT0iNzYiIHI9IjEyIiBmaWxsPSIjOGI1Y2Y2Ii8+CjxjaXJjbGUgY3g9Ijk2IiBjeT0iMTE2IiByPSIxMiIgZmlsbD0iIzhiNWNmNiIvPgo8c3ZnIGlkPSJncmFkaWVudDBfbGluZWFyXzFfMSI+CjxkZWZzPgo8bGluZWFyR3JhZGllbnQgaWQ9ImdyYWRpZW50MF9saW5lYXJfMV8xIiB4MT0iMCIgeTE9IjAiIHgyPSIxOTIiIHkyPSIxOTIiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzhiNWNmNiIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMzOThlZjciLz4KPC9saW5lYXJHcmFkaWVudD4KPC9kZWZzPgo8L3N2Zz4KPC9zdmc+Cg==",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzg0IiBoZWlnaHQ9IjM4NCIgdmlld0JveD0iMCAwIDM4NCAzODQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzODQiIGhlaWdodD0iMzg0IiByeD0iODAiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xXzEpIi8+CjxwYXRoIGQ9Ik0xOTIgMTA0QzIxOC41MSAxMDQgMjQwIDEyNS40OSAyNDAgMTUyVjIzMkMyNDAgMjU4LjUxIDIxOC41MSAyODAgMTkyIDI4MEMxNjUuNDkgMjgwIDE0NCAyNTguNTEgMTQ0IDIzMlYxNTJDMTQ0IDEyNS40OSAxNjUuNDkgMTA0IDE5MiAxMDRaIiBmaWxsPSJ3aGl0ZSIvPgo8Y2lyY2xlIGN4PSIxOTIiIGN5PSIxNTIiIHI9IjI0IiBmaWxsPSIjOGI1Y2Y2Ii8+CjxjaXJjbGUgY3g9IjE5MiIgY3k9IjIzMiIgcj0iMjQiIGZpbGw9IiM4YjVjZjYiLz4KPHN2ZyBpZD0iZ3JhZGllbnQwX2xpbmVhcl8xXzEiPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfbGluZWFyXzFfMSIgeDE9IjAiIHkxPSIwIiB4Mj0iMzg0IiB5Mj0iMzg0IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiM4YjVjZjYiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMzk4ZWY3Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+Cjwvc3ZnPgo=",
+      "sizes": "384x384",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTA0IiBmaWxsPSJ1cmwoI2dyYWRpZW50MF9saW5lYXJfMV8xKSIvPgo8cGF0aCBkPSJNMjU2IDEzOEMzMDEuMDE5IDEzOCAzMzggMTc0Ljk4MSAzMzggMjIwVjI5MkMzMzggMzM3LjAxOSAzMDEuMDE5IDM3NCAyNTYgMzc0QzIxMC45ODEgMzc0IDE3NCAzMzcuMDE5IDE3NCAyOTJWMjIwQzE3NCAxNzQuOTgxIDIxMC45ODEgMTM4IDI1NiAxMzhaIiBmaWxsPSJ3aGl0ZSIvPgo8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyMjAiIHI9IjMyIiBmaWxsPSIjOGI1Y2Y2Ii8+CjxjaXJjbGUgY3g9IjI1NiIgY3k9IjI5MiIgcj0iMzIiIGZpbGw9IiM4YjVjZjYiLz4KPHN2ZyBpZD0iZ3JhZGllbnQwX2xpbmVhcl8xXzEiPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfbGluZWFyXzFfMSIgeDE9IjAiIHkxPSIwIiB4Mj0iNTEyIiB5Mj0iNTEyIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiM4YjVjZjYiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMzk4ZWY3Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+Cjwvc3ZnPgo=",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Homepage with journal entries"
+    },
+    {
+      "src": "/screenshots/mobile-1.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile journal view"
+    }
+  ]
+}
