@@ -1,25 +1,51 @@
-# Various IDEs and Editors
+# ───────────────────────────────
+# IDEs / Editors
 .vscode/
 .idea/
+*.swp
 **/*~
 
-# Mac OSX temporary files
+# OS junk
 .DS_Store
 **/.DS_Store
+Thumbs.db
 
-# dfx temporary files
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ───────────────────────────────
+# DFX / Internet Computer
 .dfx/
+canister_ids.json
+src/declarations/
 
-# generated files
-**/declarations/
+# Internet Identity (local clone, not tracked)
+internet-identity/
 
-# rust
-target/
-
-# frontend code
+# ───────────────────────────────
+# Node / Frontend
 node_modules/
 dist/
+build/
+.out/
+.HACK_BECAUSE_OF_ALLOW_JS
 .svelte-kit/
 
-# environment variables
+# ───────────────────────────────
+# Rust (if you have Motoko/Rust canisters)
+target/
+
+# ───────────────────────────────
+# Environment files
 .env
+.env.local
+.env.*.local
+.env.production
+.envv
+
+# ───────────────────────────────
+# Misc artifacts
+src/journal_frontend.zip

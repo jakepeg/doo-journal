@@ -1,21 +1,17 @@
-import { useInternetIdentity } from './useInternetIdentity';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
-import type { _SERVICE as backendInterface } from '../../../declarations/journal_backend/journal_backend.did';
+import { useInternetIdentity } from "./useInternetIdentity";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+import type { _SERVICE as backendInterface } from "../../../declarations/journal_backend/journal_backend.did";
 
-import { createActorWithConfig } from '../config';
+import { createActorWithConfig } from "../config";
 
-type ExtendedBackendInterface = backendInterface & {
-  initializeAccessControl?: () => Promise<void>;
-};
-
-const ACTOR_QUERY_KEY = 'actor';
+const ACTOR_QUERY_KEY = "actor";
 
 export function useActor() {
   const { identity } = useInternetIdentity();
   const queryClient = useQueryClient();
 
-  const actorQuery = useQuery<ExtendedBackendInterface>({
+  const actorQuery = useQuery<backendInterface>({
     queryKey: [ACTOR_QUERY_KEY, identity?.getPrincipal().toString()],
     queryFn: async () => {
       const actor = await createActorWithConfig(
@@ -23,20 +19,11 @@ export function useActor() {
           ? {
               agentOptions: {
                 identity,
-                host: import.meta.env.VITE_IC_HOST || 'http://127.0.0.1:4943',
+                host: import.meta.env.VITE_IC_HOST || "http://127.0.0.1:4943",
               },
             }
           : {}
       );
-
-      // Only run once (if canister supports it)
-      try {
-        if (actor.initializeAccessControl) {
-          await actor.initializeAccessControl();
-        }
-      } catch (err) {
-        console.warn('initializeAccessControl skipped:', err);
-      }
 
       return actor;
     },

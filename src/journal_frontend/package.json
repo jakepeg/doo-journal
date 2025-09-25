@@ -3,16 +3,16 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-"scripts": {
-  "setup": "npm i && dfx canister create journal_backend && dfx generate journal_backend && dfx deploy",
-  "dev": "vite --port 3000",
-  "prebuild": "dfx generate journal_backend",
-  "build": "tsc && vite build",
-  "preview": "vite preview --port 3000",
-  "format": "prettier --write \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\"",
-  "update-env": "node ../../scripts/update-env.js",
-  "deploy": "dfx deploy && npm run update-env"
-},
+  "scripts": {
+    "setup": "npm i && dfx canister create journal_backend && dfx generate journal_backend && dfx deploy",
+    "dev": "vite --port 3000",
+    "prebuild": "dfx generate journal_backend",
+    "build": "tsc && vite build",
+    "preview": "vite preview --port 3000",
+    "format": "prettier --write \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\"",
+    "update-env": "node ../../scripts/update-env.js",
+    "deploy": "dfx deploy"
+  },
   "dependencies": {
     "@dfinity/agent": "^3.2.6",
     "@dfinity/auth-client": "^3.2.6",

@@ -31,9 +31,6 @@ function App() {
     });
   }, []);
   
-  console.log('[DEBUG] App: Rendering with ThemeProvider and RouterProvider');
-  console.log("TEST ENV:", import.meta.env.VITE_TEST_ENV);
-
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <RouterProvider router={router} />

@@ -13,6 +13,12 @@
       ],
       "type": "assets",
       "workspace": "journal_frontend"
+    },
+    "internet_identity": {
+      "type": "custom",
+      "candid": "internet-identity/internet_identity.did",
+      "wasm": "internet-identity/internet_identity_dev.wasm",
+      "init_arg": "(null)"
     }
   },
   "defaults": {
