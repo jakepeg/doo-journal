@@ -19,40 +19,44 @@ export default function TopNavigation() {
   };
 
   return (
-    <header className="bg-white/80 backdrop-blur-sm border-b border-purple-200 sticky top-0 z-40">
-      <div className="container mx-auto px-4 py-4 max-w-[1024px]">
-        <div className="flex items-center justify-between">
-          {/* Logo / Title links to `/` */}
-          <Link to="/" className="flex items-center space-x-2 cursor-pointer">
-            <DooLogo width={40} height={40} />
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Doo Journal
-            </h1>
-          </Link>
-
-          {/* Actions */}
-          <div className="flex items-center space-x-2">
-            {isAuthenticated ? (
-              <Button
-                onClick={handleLogout}
-                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            ) : (
-              <Button
-                onClick={login}
-                disabled={isLoggingIn}
-                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
-              >
-                <LogIn className="w-4 h-4 mr-2" />
-                {isLoggingIn ? 'Starting...' : 'Login'}
-              </Button>
-            )}
-          </div>
+<header className="sticky top-0 z-40">
+  <div className="w-full px-6 py-4">
+    <div className="flex items-center justify-between">
+      {/* Logo / Title */}
+      <Link to="/" className="flex items-center space-x-2 cursor-pointer">
+        <DooLogo width={40} height={40} />
+        <div className="flex flex-col">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            Doo Journal
+          </h1>
+          <span className="text-xs text-gray-500">Journal Today: Memories Forever</span>
         </div>
+      </Link>
+
+      {/* Actions */}
+      <div className="ml-auto">
+        {isAuthenticated ? (
+          <Button
+            onClick={handleLogout}
+            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
+        ) : (
+          <Button
+            onClick={login}
+            disabled={isLoggingIn}
+            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
+          >
+            <LogIn className="w-4 h-4 mr-2" />
+            {isLoggingIn ? 'Starting...' : 'Login'}
+          </Button>
+        )}
       </div>
-    </header>
+    </div>
+  </div>
+</header>
+
   );
 }
