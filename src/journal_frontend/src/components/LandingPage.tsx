@@ -8,6 +8,8 @@ import ProfileSetupModal from "./ProfileSetupModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles, Share2, DollarSign, Shield } from "lucide-react";
+import { Link } from '@tanstack/react-router';
+
 
 export default function LandingPage() {
   const { identity, login, isLoggingIn, isInitializing } = useInternetIdentity();
@@ -141,11 +143,19 @@ export default function LandingPage() {
                 <h3 className="text-3xl font-bold text-indigo-900 mb-4">
                   Hey Parents
                 </h3>
-                <p className="text-lg text-indigo-700 leading-relaxed">
-                  Rest assured, Doo Journal is built with safety and privacy at its core. Your
-                  child’s journal is secured on the blockchain with privacy
-                  controls and safe sharing features.
-                </p>
+<p className="text-lg text-indigo-700 leading-relaxed">
+  Rest assured, Doo Journal is built with safety and privacy at its core. Your
+  child’s journal is secured on the blockchain with privacy
+  controls and safe sharing features.{" "}
+  <Link
+    to="/privacy"
+    className="text-purple-600 underline hover:text-purple-800"
+  >
+    Find out more in our Privacy Page
+  </Link>
+  .
+</p>
+
               </div>
             </div>
           </CardContent>
