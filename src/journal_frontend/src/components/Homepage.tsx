@@ -104,7 +104,7 @@ export default function Homepage() {
     <div className="min-h-screen flex flex-col">
       <div className="container mx-auto px-4 max-w-[1024px] flex-1 pb-8">
         {/* Profile Section */}
-        <Card className="mt-8 mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
+        <Card className="pt-0 mt-8 mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
           <div className="relative">
             <div className="h-48 bg-gradient-to-r from-purple-400 to-blue-400 relative">
               <div className="absolute inset-0 bg-black/20"></div>
@@ -168,10 +168,9 @@ export default function Homepage() {
               </p>
               <Button 
                 onClick={handleNewEntry}
-                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
+                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-8 py-7 text-xl rounded-full shadow-md transition transform hover:scale-105 active:scale-95 mx-auto flex items-center gap-2"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Write First Entry
+                💖  Write First Entry
               </Button>
             </CardContent>
           </Card>
