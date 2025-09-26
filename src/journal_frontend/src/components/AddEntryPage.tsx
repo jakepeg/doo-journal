@@ -11,8 +11,6 @@ import { useCreateJournalEntry } from '../hooks/useQueries';
 // import { useFileUpload } from '../blob-storage/FileStorage';
 import RichTextEditor from './RichTextEditor';
 import EmojiPicker from './EmojiPicker';
-import TopNavigation from './TopNavigation';
-import Footer from './Footer';
 import { ArrowLeft, Calendar as CalendarIcon, Globe, Lock, Save, Smile, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -116,7 +114,7 @@ export default function AddEntryPage() {
 
   return (
     <>
-      <TopNavigation />
+
       
       {/* Back to Journal Button - Below Navigation */}
       <div className="container mx-auto px-4 py-4 max-w-[1024px]">
@@ -319,7 +317,6 @@ export default function AddEntryPage() {
         </Card>
       </main>
 
-      <Footer />
     </>
   );
 }
