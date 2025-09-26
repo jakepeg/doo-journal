@@ -7,12 +7,11 @@ import Time "mo:base/Time";
 import Text "mo:base/Text";
 import Array "mo:base/Array";
 
-// ==== Principal-OrderedMap specialization ====
-
 persistent actor Journal {
   // Principal-OrderedMap specialization
   type PrincipalMap<V> = OrderedMap.Map<Principal, V>;
   transient let PrincipalMapOps = OrderedMap.Make<Principal>(Principal.compare);
+
   // Transient state (recreated on upgrade)
   transient var accessControlState = AccessControl.initState();
   transient var registry = Registry.new();
@@ -35,7 +34,7 @@ persistent actor Journal {
     imagePath : ?Text;
   };
 
-  // Stable state (persisted across upgrades)
+  // Stable state
   var userProfiles : PrincipalMap<UserProfile> = PrincipalMapOps.empty<UserProfile>();
   var journalEntries : PrincipalMap<[JournalEntry]> = PrincipalMapOps.empty<[JournalEntry]>();
 
@@ -49,6 +48,7 @@ persistent actor Journal {
   };
 
   public shared ({ caller }) func assignCallerUserRole(user : Principal, role : AccessControl.UserRole) : async () {
+    AccessControl.initialize(accessControlState, caller);
     AccessControl.assignRole(accessControlState, caller, user, role);
   };
 
@@ -66,6 +66,7 @@ persistent actor Journal {
   };
 
   public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
+    AccessControl.initialize(accessControlState, caller);
     userProfiles := PrincipalMapOps.put(userProfiles, caller, profile);
   };
 
@@ -77,6 +78,8 @@ persistent actor Journal {
     date : Int,
     imagePath : ?Text,
   ) : async Text {
+    AccessControl.initialize(accessControlState, caller);
+
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Debug.trap("Unauthorized: Only users can create journal entries");
     };
@@ -102,34 +105,6 @@ persistent actor Journal {
     entryId;
   };
 
-  public query func getPublicJournalEntries(user : Principal) : async [JournalEntry] {
-    let entries = PrincipalMapOps.get(journalEntries, user);
-    switch (entries) {
-      case null { [] };
-      case (?userEntries) {
-        Array.filter(userEntries, func(entry : JournalEntry) : Bool { entry.isPublic });
-      };
-    };
-  };
-
-  public query ({ caller }) func getAllJournalEntries() : async [JournalEntry] {
-    let entries = PrincipalMapOps.get(journalEntries, caller);
-    switch (entries) {
-      case null { [] };
-      case (?userEntries) { userEntries };
-    };
-  };
-
-  public query func getJournalEntryById(user : Principal, entryId : Text) : async ?JournalEntry {
-    let entries = PrincipalMapOps.get(journalEntries, user);
-    switch (entries) {
-      case null { null };
-      case (?userEntries) {
-        Array.find(userEntries, func(entry : JournalEntry) : Bool { entry.id == entryId });
-      };
-    };
-  };
-
   public shared ({ caller }) func updateJournalEntry(
     entryId : Text,
     title : Text,
@@ -138,6 +113,8 @@ persistent actor Journal {
     date : Int,
     imagePath : ?Text,
   ) : async () {
+    AccessControl.initialize(accessControlState, caller);
+
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Debug.trap("Unauthorized: Only users can update journal entries");
     };
@@ -168,6 +145,8 @@ persistent actor Journal {
   };
 
   public shared ({ caller }) func deleteJournalEntry(entryId : Text) : async () {
+    AccessControl.initialize(accessControlState, caller);
+
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Debug.trap("Unauthorized: Only users can delete journal entries");
     };
@@ -185,8 +164,39 @@ persistent actor Journal {
     };
   };
 
+  // ---- Queries for journal entries ----
+  public query ({ caller }) func getAllJournalEntries() : async [JournalEntry] {
+    let entries = PrincipalMapOps.get(journalEntries, caller);
+    switch (entries) {
+      case null { [] };
+      case (?userEntries) { userEntries };
+    };
+  };
+
+  public query func getJournalEntryById(user : Principal, entryId : Text) : async ?JournalEntry {
+    let entries = PrincipalMapOps.get(journalEntries, user);
+    switch (entries) {
+      case null { null };
+      case (?userEntries) {
+        Array.find(userEntries, func(entry : JournalEntry) : Bool { entry.id == entryId });
+      };
+    };
+  };
+
+  public query func getPublicJournalEntries(user : Principal) : async [JournalEntry] {
+    let entries = PrincipalMapOps.get(journalEntries, user);
+    switch (entries) {
+      case null { [] };
+      case (?userEntries) {
+        Array.filter(userEntries, func(entry : JournalEntry) : Bool { entry.isPublic });
+      };
+    };
+  };
+
   // ---- File registry passthroughs ----
   public shared ({ caller }) func registerFileReference(path : Text, hash : Text) : async () {
+    AccessControl.initialize(accessControlState, caller);
+
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Debug.trap("Unauthorized: Only users can register file references");
     };
@@ -202,6 +212,8 @@ persistent actor Journal {
   };
 
   public shared ({ caller }) func dropFileReference(path : Text) : async () {
+    AccessControl.initialize(accessControlState, caller);
+
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Debug.trap("Unauthorized: Only users can drop file references");
     };
