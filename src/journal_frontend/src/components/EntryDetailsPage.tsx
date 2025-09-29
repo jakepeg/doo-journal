@@ -160,9 +160,25 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
   }
 
   return (
-    <main className="container mx-auto px-4 pb-8 max-w-[1024px] flex-1 mb-8 mt-8">
-      {/* Header for public viewers */}
-      {!isAuthenticated && (
+    <>
+      {/* Back to Journal Button - Only for authenticated users */}
+      {isAuthenticated && (
+        <div className="container mx-auto px-4 py-4 max-w-[1024px]">
+          <Button
+            onClick={handleBackToJournal}
+            variant="ghost"
+            size="sm"
+            className="text-gray-600 hover:text-purple-600"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Journal
+          </Button>
+        </div>
+      )}
+
+      <main className="container mx-auto px-4 pb-8 max-w-[1024px] flex-1 mb-8 mt-8">
+        {/* Header for public viewers */}
+        {!isAuthenticated && (
         <div className="flex items-center justify-between mb-6">
           <h2
             className="text-2xl font-bold text-gray-900 cursor-pointer hover:underline"
@@ -237,5 +253,6 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
         <JournalEntryModal entry={finalEntry} onClose={() => setShowEditModal(false)} />
       )}
     </main>
+    </>
   );
 }
