@@ -3,7 +3,7 @@ import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Avatar, AvatarFallback } from './ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { Plus, Lock, Globe, Edit, Trash2, Share2 } from 'lucide-react';
 import JournalEntryModal from './JournalEntryModal';
@@ -134,6 +134,11 @@ export default function Homepage() {
             </div>
             <div className="absolute left-6 -bottom-10">
               <Avatar className="w-20 h-20 border-4 border-white shadow-lg">
+                <AvatarImage 
+                  src={profile?.profilePicture && profile.profilePicture.length > 0 ? profile.profilePicture[0] : undefined}
+                  alt={`${profile?.name || 'User'}'s profile picture`}
+                  className="object-cover"
+                />
                 <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-400 text-white text-2xl font-bold">
                   {profile?.name?.charAt(0).toUpperCase() || '?'}
                 </AvatarFallback>

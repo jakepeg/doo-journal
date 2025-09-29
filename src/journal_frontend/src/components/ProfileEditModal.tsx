@@ -5,10 +5,8 @@ import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { useGetCallerUserProfile, useSaveUserProfile } from '../hooks/useQueries';
-// import { useFileUpload, useFileUrl } from '../blob-storage/FileStorage';
-// import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-// import { Camera, Upload, X } from 'lucide-react';
-import { User } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Camera, Upload, X, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ProfileEditModalProps {
@@ -19,28 +17,58 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
   const { data: currentProfile } = useGetCallerUserProfile();
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
-  // const [profilePicturePath, setProfilePicturePath] = useState<string>('');
-  // const [coverImagePath, setCoverImagePath] = useState<string>('');
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState<string>('');
   
   const { mutate: saveProfile, isPending: isSaving } = useSaveUserProfile();
-  // const { uploadFile, isUploading } = useFileUpload();
-  
-  // const { data: profilePictureUrl } = useFileUrl(profilePicturePath);
-  // const { data: coverImageUrl } = useFileUrl(coverImagePath);
 
   useEffect(() => {
     if (currentProfile) {
       setName(currentProfile.name);
       setBio(currentProfile.bio);
-      // setProfilePicturePath(currentProfile.profilePicture || '');
-      // setCoverImagePath(currentProfile.coverImage || '');
+      // If there's an existing profile picture, convert it to preview
+      if (currentProfile.profilePicture && currentProfile.profilePicture.length > 0) {
+        // Extract the string from the optional array
+        const profilePicUrl = currentProfile.profilePicture[0];
+        if (profilePicUrl) {
+          setProfilePicturePreview(profilePicUrl);
+        }
+      }
     }
   }, [currentProfile]);
 
-  // const handleProfilePictureUpload = async (...) => { ... }
-  // const handleCoverImageUpload = async (...) => { ... }
+  const handleProfilePictureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image must be smaller than 5MB');
+        return;
+      }
 
-  const handleSubmit = (e: React.FormEvent) => {
+      setProfilePicture(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setProfilePicturePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeProfilePicture = () => {
+    setProfilePicture(null);
+    setProfilePicturePreview('');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!name.trim()) {
@@ -48,14 +76,36 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
       return;
     }
 
-  saveProfile({
-    name: name.trim(),
-    bio: bio.trim(),
-    profilePicture: [],
-    coverImage: [],
-  }, {
-    onSuccess: onClose,
-  });
+    let profilePictureData: [] | [string] = [];
+    
+    // If there's a new profile picture file, convert it to base64
+    if (profilePicture) {
+      try {
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+        });
+        reader.readAsDataURL(profilePicture);
+        const base64String = await base64Promise;
+        profilePictureData = [base64String];
+      } catch (error) {
+        toast.error('Failed to process profile picture');
+        return;
+      }
+    } else if (profilePicturePreview && !profilePicture) {
+      // Keep existing profile picture if no new one uploaded
+      profilePictureData = [profilePicturePreview];
+    }
+
+    saveProfile({
+      name: name.trim(),
+      bio: bio.trim(),
+      profilePicture: profilePictureData,
+      coverImage: [],
+    }, {
+      onSuccess: onClose,
+    });
   }
 
   return (
@@ -69,10 +119,58 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Profile picture upload commented out */}
-          {/*
-          <div className="text-center"> ... avatar + upload button ... </div>
-          */}
+          {/* Profile Picture Upload */}
+          <div className="text-center space-y-4">
+            <div className="relative inline-block">
+              <Avatar className="w-24 h-24 border-4 border-purple-200 shadow-lg">
+                <AvatarImage 
+                  src={profilePicturePreview} 
+                  alt="Profile picture"
+                  className="object-cover"
+                />
+                <AvatarFallback className="bg-gradient-to-br from-purple-100 to-blue-100 text-purple-600 text-xl font-bold">
+                  {name ? name.charAt(0).toUpperCase() : <User className="w-8 h-8" />}
+                </AvatarFallback>
+              </Avatar>
+              
+              {profilePicturePreview && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={removeProfilePicture}
+                  className="absolute -top-2 -right-2 rounded-full w-8 h-8 p-0 bg-red-100 hover:bg-red-200 border-red-300"
+                >
+                  <X className="w-4 h-4 text-red-600" />
+                </Button>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">
+                Profile Picture 📸
+              </Label>
+              <div className="flex items-center justify-center">
+                <input
+                  type="file"
+                  id="profile-picture"
+                  accept="image/*"
+                  onChange={handleProfilePictureUpload}
+                  className="hidden"
+                />
+                <Label
+                  htmlFor="profile-picture"
+                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-100 to-blue-100 hover:from-purple-200 hover:to-blue-200 border border-purple-300 rounded-lg cursor-pointer transition-colors"
+                >
+                  {profilePicture ? <Camera className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
+                  <span className="text-sm font-medium">
+                    {profilePicture ? 'Change Picture' : 'Upload Picture'}
+                  </span>
+                </Label>
+              </div>
+              <p className="text-xs text-gray-500">Max 5MB • JPG, PNG, GIF</p>
+            </div>
+          </div>
 
           {/* Name */}
           <div className="space-y-2">
