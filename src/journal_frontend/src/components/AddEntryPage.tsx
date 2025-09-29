@@ -11,7 +11,7 @@ import { Calendar } from './ui/calendar-basic';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { useCreateJournalEntry } from '../hooks/useQueries';
 // import { useFileUpload } from '../blob-storage/FileStorage';
-import RichTextEditor from './RichTextEditor';
+import RichTextEditor from './RichTextEditor-new';
 import EmojiPicker from './EmojiPicker';
 import { ArrowLeft, Calendar as CalendarIcon, Globe, Lock, Save, Smile, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';

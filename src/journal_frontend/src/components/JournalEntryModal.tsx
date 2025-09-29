@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { useCreateJournalEntry, useUpdateJournalEntry } from '../hooks/useQueries';
 // import { useFileUpload } from '../blob-storage/FileStorage';
 import type { JournalEntry } from '../../../declarations/journal_backend/journal_backend.did';
-import RichTextEditor from './RichTextEditor';
+import RichTextEditor from './RichTextEditor-new';
 import EmojiPicker from './EmojiPicker';
 import { BookOpen, Globe, Lock, Calendar as CalendarIcon, Smile, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
