@@ -215,7 +215,29 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
         <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
           <CardHeader className="pb-6">
             <div className="space-y-4">
-              <h1 className="text-4xl font-bold text-gray-900">{finalEntry.title}</h1>
+              <div className="flex items-start justify-between">
+                <h1 className="text-4xl font-bold text-gray-900 flex-1">{finalEntry.title}</h1>
+                {isOwnEntry && (
+                  <div className="flex items-center space-x-2 ml-4">
+                    <Button
+                      onClick={handleEdit}
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-500 hover:text-purple-600"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      onClick={handleDelete}
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-500 hover:text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center space-x-4">
                   <Badge variant={finalEntry.isPublic ? 'default' : 'secondary'} className="text-sm">
@@ -233,6 +255,17 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
                     <Calendar className="w-4 h-4 mr-1" />
                     <span>{formatEntryDate(finalEntry.date)}</span>
                   </div>
+                  {finalEntry.isPublic && (
+                    <Button
+                      onClick={handleShare}
+                      variant="outline"
+                      size="sm"
+                      className="border-purple-200 hover:bg-purple-50"
+                    >
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Share
+                    </Button>
+                  )}
                   {!isAuthenticated && authorProfile && (
                     <div className="text-sm text-gray-600">by {authorProfile.name}</div>
                   )}

@@ -159,11 +159,18 @@ export default function Homepage() {
           <div className="flex space-x-2">
             <Button
               onClick={handleShare}
-              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
+              variant="outline"
+              size="sm"
+              className="border-purple-200 hover:bg-purple-50"
             >
               <Share2 className="w-4 h-4 mr-2" />
-              Share Journal
+              Share
             </Button>
+
+
+
+
+
             <Button
               onClick={handleNewEntry}
               className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
