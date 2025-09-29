@@ -7,7 +7,6 @@ import { Principal } from '@dfinity/principal';
 import { useState } from 'react';
 import { useActor } from '../hooks/useActor';
 import { useNavigate } from '@tanstack/react-router';
-import DooLogo from './DooLogo';
 
 interface PublicHomepageProps {
   user: Principal;
@@ -30,9 +29,7 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
       .replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-purple-300 pl-4 italic text-gray-600 my-2">$1</blockquote>')
       .replace(/\n/g, '<br />');
 
-    // Wrap list items in ul
     html = html.replace(/(<li>.*<\/li>)/s, '<ul class="list-disc list-inside space-y-1 my-4">$1</ul>');
-
     return html;
   };
 
@@ -56,25 +53,18 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
   if (isLoading) {
     return (
       <div className="flex flex-col flex-1">
-        <header className="bg-white/80 backdrop-blur-sm border-b border-purple-200 sticky top-0 z-40">
-          <div className="container mx-auto px-4 py-4 max-w-[1024px]">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <DooLogo width={40} height={40} />
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                  Shared Journal
-                </h1>
-              </div>
-              <Button
-                onClick={handleStartJournal}
-                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Start Your Own Journal
-              </Button>
-            </div>
-          </div>
-        </header>
+        <div className="container mx-auto px-4 py-4 max-w-[1024px] flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Shared Journal
+          </h2>
+          <Button
+            onClick={handleStartJournal}
+            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Start Your Own Journal
+          </Button>
+        </div>
         
         <div className="flex items-center justify-center flex-1">
           <div className="text-center">
@@ -91,32 +81,26 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
 
   return (
     <div className="flex flex-col flex-1">
-      <header className="bg-white/80 backdrop-blur-sm border-b border-purple-200 sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4 max-w-[1024px]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <DooLogo width={40} height={40} />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                {profile?.name ? `${profile.name}'s Journal` : 'Shared Journal'}
-              </h1>
-            </div>
-            <Button
-              onClick={handleStartJournal}
-              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Start Your Own Journal
-            </Button>
-          </div>
-        </div>
-      </header>
+      {/* Title Bar */}
+      <div className="container mx-auto px-4 py-4 max-w-[1024px] flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">
+          {profile?.name ? `${profile.name}'s Journal` : "Shared Journal"}
+        </h2>
+        <Button
+          onClick={handleStartJournal}
+          className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
+        >
+          <Sparkles className="w-4 h-4 mr-2" />
+          Start Your Own Journal
+        </Button>
+      </div>
 
       <main className="container mx-auto px-4 max-w-[1024px] flex-1 mb-8">
         {/* Profile Section */}
         {profile ? (
           <Card className="mt-8 mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
             <CardContent className="px-6 pt-12">
-              <div className="ml-0">
+              <div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">
                   {profile.name}
                 </h2>
@@ -136,7 +120,6 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
         ) : (
           <Card className="mt-8 mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm">
             <CardContent className="p-12 text-center">
-              <DooLogo width={64} height={64} className="mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-gray-700 mb-2">Anonymous Writer</h2>
               <p className="text-gray-600">This user hasn't set up their profile yet.</p>
             </CardContent>
@@ -146,7 +129,6 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
         {/* Shared Journal Entries Section */}
         <div className="mb-6">
           <h3 className="text-2xl font-bold text-gray-900 mb-2">Shared Journal Entries</h3>
-          <p className="text-gray-600">Sharing thoughts and adventures with the world ✨</p>
         </div>
 
         {entries.length === 0 ? (
