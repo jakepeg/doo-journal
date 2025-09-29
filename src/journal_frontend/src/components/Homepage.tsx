@@ -23,6 +23,21 @@ export default function Homepage() {
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
   const { mutate: deleteEntry } = useDeleteJournalEntry();
 
+  const renderContent = (content: string) => {
+  let html = content
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg my-4 shadow-md" crossorigin="anonymous" />')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-purple-300 pl-4 italic text-gray-600 my-2">$1</blockquote>')
+    .replace(/\n/g, '<br />');
+
+  // Wrap list items in ul
+  html = html.replace(/(<li>.*<\/li>)/s, '<ul class="list-disc list-inside space-y-1 my-4">$1</ul>');
+
+  return html;
+};
+
   useEffect(() => {
     console.log('[DEBUG] Homepage: State changed', {
       isLoading,
@@ -235,20 +250,22 @@ export default function Homepage() {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="pt-4">
-                    <div className="flex gap-4">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-gray-700 leading-relaxed">
-                          {truncateContent(entry.content)}
-                        </p>
-                        {entry.content.length > 200 && (
-                          <p className="text-purple-600 text-sm mt-2 font-medium">
-                            Click to read more...
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
+<CardContent className="pt-4">
+  <div className="flex gap-4">
+    <div className="flex-1 min-w-0">
+      <div
+        className="text-gray-700 leading-relaxed line-clamp-3"
+        dangerouslySetInnerHTML={{ __html: renderContent(entry.content) }}
+      />
+      {entry.content.length > 200 && (
+        <p className="text-purple-600 text-sm mt-2 font-medium">
+          Click to read more...
+        </p>
+      )}
+    </div>
+  </div>
+</CardContent>
+
                 </Card>
               ))}
           </div>
