@@ -48,7 +48,7 @@ export default function PrivacyPolicyPage() {
                 <section>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">Introduction</h2>
                   <p>
-                    Welcome to My Journal, a kids journaling application. We are committed to protecting
+                    Welcome to Doo Journal, a kids journaling application. We are committed to protecting
                     your privacy and ensuring a safe experience for all our users, especially children.
                     This Privacy Policy explains how we collect, use, and protect your information when
                     you use our service.
