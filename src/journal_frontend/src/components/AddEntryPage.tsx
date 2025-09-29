@@ -1,3 +1,5 @@
+"use client"
+
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from './ui/button';
@@ -5,7 +7,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Calendar } from './ui/calendar';
+import { Calendar } from './ui/calendar-basic';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { useCreateJournalEntry } from '../hooks/useQueries';
 // import { useFileUpload } from '../blob-storage/FileStorage';
@@ -23,8 +25,6 @@ export default function AddEntryPage() {
   const [content, setContent] = useState('');
   const [isPublic, setIsPublic] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [imagePath, setImagePath] = useState<string>('');
 
   const { mutate: createEntry, isPending } = useCreateJournalEntry();
@@ -104,7 +104,6 @@ export default function AddEntryPage() {
   const handleEmojiSelect = (emoji: string) => {
     console.log('[DEBUG] AddEntryPage: Emoji selected', { emoji });
     setContent(prev => prev + emoji);
-    setShowEmojiPicker(false);
   };
 
   const handleBackToJournal = () => {
@@ -164,35 +163,39 @@ export default function AddEntryPage() {
               </div>
 
               {/* Date Selector */}
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-gray-700">
-                  Entry Date 📅
-                </Label>
-                <Popover open={showCalendar} onOpenChange={setShowCalendar}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal border-2 border-purple-200 hover:border-purple-400"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {format(selectedDate, 'PPP')}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={(date) => {
-                        if (date) {
-                          setSelectedDate(date);
-                          setShowCalendar(false);
-                        }
-                      }}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
+<div className="space-y-2">
+  <Label className="text-sm font-semibold text-gray-700">
+    Entry Date 📅
+  </Label>
+  <Popover>
+    <PopoverTrigger>
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full justify-start text-left font-normal border-2 border-purple-200 hover:border-purple-400"
+      >
+        <CalendarIcon className="mr-2 h-4 w-4" />
+        {format(selectedDate, "PPP")}
+      </Button>
+    </PopoverTrigger>
+    <PopoverContent className="w-[280px] p-2 bg-white rounded-lg shadow-lg border border-purple-100">
+      <Calendar
+        mode="single"
+        selected={selectedDate}
+        onSelect={(date) => {
+          console.log('Date selected:', date);
+          if (date) {
+            setSelectedDate(date);
+          }
+        }}
+        className="rounded-md border"
+      />
+    </PopoverContent>
+  </Popover>
+</div>
+
+
+
 
               {/* Content Editor */}
               <div className="space-y-2">
@@ -201,8 +204,8 @@ export default function AddEntryPage() {
                     Your Story 📝
                   </Label>
                   <div className="flex items-center space-x-2">
-                    <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
-                      <PopoverTrigger asChild>
+                    <Popover>
+                      <PopoverTrigger>
                         <Button
                           type="button"
                           variant="outline"
@@ -213,7 +216,7 @@ export default function AddEntryPage() {
                           Emoji
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-80 p-0" align="end">
+                      <PopoverContent className="w-80 p-0 bg-white rounded-lg shadow-lg border border-purple-100" align="end">
                         <EmojiPicker onEmojiSelect={handleEmojiSelect} />
                       </PopoverContent>
                     </Popover>

@@ -98,7 +98,7 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
 
   return (
     <div className="flex flex-col flex-1">
-      {/* Title Bar */}
+
       <div className="container mx-auto px-4 py-4 max-w-[1024px] flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">
           {profile?.name ? `${profile.name}'s Shared Journal` : "Shared Journal"}
