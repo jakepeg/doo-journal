@@ -230,7 +230,7 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
           </div>
 
           {/* Privacy Settings */}
-          <div className="flex items-center justify-between p-4 bg-white/60 rounded-lg border border-purple-200">
+          <div className="flex items-center justify-between p-4 rounded-lg border-2 border-purple-200">
             <div className="flex items-center space-x-3">
               {isPublic ? (
                 <Globe className="w-5 h-5 text-green-600" />
@@ -253,6 +253,7 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
               id="privacy"
               checked={isPublic}
               onCheckedChange={setIsPublic}
+              className="bg-red-400 data-[state=checked]:bg-green-500"
             />
           </div>
 
