@@ -133,7 +133,7 @@ body {
 
   /* Header blur (App A) */
   header {
-    background-color: oklch(var(--card) / 0.8) !important;
+    /* background-color: oklch(var(--card) / 0.8) !important; */
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
   }

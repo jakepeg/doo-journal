@@ -1,11 +1,22 @@
+import { useEffect } from 'react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { ArrowLeft } from 'lucide-react';
 
 export default function PrivacyPolicyPage() {
+  const navigate = useNavigate();
   const { identity } = useInternetIdentity();
   const isAuthenticated = !!identity;
+
+  // Redirect to home if user is not authenticated
+  useEffect(() => {
+    if (!identity) {
+      console.log('[DEBUG] PrivacyPolicyPage: No identity found, redirecting to home');
+      navigate({ to: '/' });
+    }
+  }, [identity, navigate]);
 
   return (
     <>
@@ -37,7 +48,7 @@ export default function PrivacyPolicyPage() {
                 <section>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">Introduction</h2>
                   <p>
-                    Welcome to My Journal, a kids journaling application. We are committed to protecting
+                    Welcome to Doo Journal, a kids journaling application. We are committed to protecting
                     your privacy and ensuring a safe experience for all our users, especially children.
                     This Privacy Policy explains how we collect, use, and protect your information when
                     you use our service.

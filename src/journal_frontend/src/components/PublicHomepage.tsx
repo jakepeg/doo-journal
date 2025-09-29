@@ -1,14 +1,13 @@
 import { useGetUserHomepage } from '../hooks/useQueries';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Avatar, AvatarFallback /*, AvatarImage */ } from './ui/avatar';
 import { Badge } from './ui/badge';
-import { Globe, Sparkles /*, Image as ImageIcon */ } from 'lucide-react';
-// import { useFileUrl } from '../blob-storage/FileStorage';
+import { Globe, Sparkles, Share2 } from 'lucide-react';
 import { Principal } from '@dfinity/principal';
 import { useState } from 'react';
 import { useActor } from '../hooks/useActor';
-import DooLogo from './DooLogo';
+import { useNavigate } from '@tanstack/react-router';
+import { toast } from 'sonner';
 
 interface PublicHomepageProps {
   user: Principal;
@@ -20,13 +19,35 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
   const [coverImageError, setCoverImageError] = useState(false);
   const [profileImageError, setProfileImageError] = useState(false);
   const { actor } = useActor();
-  
-  // Commented for now
-  // const { data: profilePictureUrl } = useFileUrl(homepage?.profile?.profilePicture || '');
-  // const { data: coverImageUrl } = useFileUrl(homepage?.profile?.coverImage || '');
+  const navigate = useNavigate();
+
+  const renderContent = (content: string) => {
+    let html = content
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg my-4 shadow-md" crossorigin="anonymous" />')
+      .replace(/^- (.+)$/gm, '<li>$1</li>')
+      .replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-purple-300 pl-4 italic text-gray-600 my-2">$1</blockquote>')
+      .replace(/\n/g, '<br />');
+
+    html = html.replace(/(<li>.*<\/li>)/s, '<ul class="list-disc list-inside space-y-1 my-4">$1</ul>');
+    return html;
+  };
 
   const handleStartJournal = () => {
     window.location.href = window.location.origin;
+  };
+
+  const handleShare = () => {
+    const shareUrl = `${window.location.origin}?user=${user.toString()}`;
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => toast.success('Profile link copied to clipboard!'))
+      .catch(() => toast.error('Failed to copy link'));
+  };
+
+  const handleEntryClick = (entryId: string) => {
+    const userId = user.toString();
+    navigate({ to: '/entry/$userId/$entryId', params: { userId, entryId } });
   };
 
   const formatDate = (timestamp: bigint) => {
@@ -37,40 +58,30 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
     });
   };
 
-  const truncateContent = (content: string, maxLength: number = 200) => {
-    const withoutImages = content.replace(/!\[.*?\]\(.*?\)/g, '');
-    if (withoutImages.length <= maxLength) return withoutImages;
-    return withoutImages.substring(0, maxLength) + '...';
-  };
-
-  // Commented for now
-  // const extractFirstImageUrl = (content: string): string | null => {
-  //   const imageMatch = content.match(/!\[.*?\]\((.*?)\)/);
-  //   return imageMatch ? imageMatch[1] : null;
-  // };
-
   if (isLoading) {
     return (
       <div className="flex flex-col flex-1">
-        <header className="bg-white/80 backdrop-blur-sm border-b border-purple-200 sticky top-0 z-40">
-          <div className="container mx-auto px-4 py-4 max-w-[1024px]">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <DooLogo width={40} height={40} />
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                  Public Journal
-                </h1>
-              </div>
-              <Button
-                onClick={handleStartJournal}
-                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Start Your Own Journal
-              </Button>
-            </div>
+        <div className="container mx-auto px-4 py-4 max-w-[1024px] flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">Shared Journal</h2>
+          <div className="flex items-center space-x-2">
+            <Button
+              onClick={handleShare}
+              variant="outline"
+              size="sm"
+              className="border-purple-200 hover:bg-purple-50"
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              Share
+            </Button>
+            <Button
+              onClick={handleStartJournal}
+              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Start Your Own Journal
+            </Button>
           </div>
-        </header>
+        </div>
         
         <div className="flex items-center justify-center flex-1">
           <div className="text-center">
@@ -87,35 +98,37 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
 
   return (
     <div className="flex flex-col flex-1">
-      <header className="bg-white/80 backdrop-blur-sm border-b border-purple-200 sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4 max-w-[1024px]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <DooLogo width={40} height={40} />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                {profile?.name ? `${profile.name}'s Journal` : 'Public Journal'}
-              </h1>
-            </div>
-            <Button
-              onClick={handleStartJournal}
-              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Start Your Own Journal
-            </Button>
-          </div>
+
+      <div className="container mx-auto px-4 py-4 max-w-[1024px] flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">
+          {profile?.name ? `${profile.name}'s Shared Journal` : "Shared Journal"}
+        </h2>
+        <div className="flex items-center space-x-2">
+          <Button
+            onClick={handleShare}
+            variant="outline"
+            size="sm"
+            className="border-purple-200 hover:bg-purple-50"
+          >
+            <Share2 className="w-4 h-4 mr-2" />
+            Share
+          </Button>
+          <Button
+            onClick={handleStartJournal}
+            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Start Your Own Journal
+          </Button>
         </div>
-      </header>
+      </div>
 
       <main className="container mx-auto px-4 max-w-[1024px] flex-1 mb-8">
         {/* Profile Section */}
         {profile ? (
           <Card className="mt-8 mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
-            {/* Cover image block commented for now */}
-            {/* <div className="relative"> ... cover img ... </div> */}
-            
             <CardContent className="px-6 pt-12">
-              <div className="ml-0">
+              <div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">
                   {profile.name}
                 </h2>
@@ -123,10 +136,10 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
                   <p className="text-gray-600 text-lg mb-4">{profile.bio}</p>
                 )}
                 <div className="flex items-center space-x-4 text-sm text-gray-500">
-                  <span>{entries.length} public entries</span>
+                  <span>{entries.length} shared entries</span>
                   <Badge variant="outline" className="text-xs">
                     <Globe className="w-3 h-3 mr-1" />
-                    Public Profile
+                    Shared Profile
                   </Badge>
                 </div>
               </div>
@@ -135,26 +148,22 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
         ) : (
           <Card className="mt-8 mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm">
             <CardContent className="p-12 text-center">
-              <DooLogo width={64} height={64} className="mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-gray-700 mb-2">Anonymous Writer</h2>
               <p className="text-gray-600">This user hasn't set up their profile yet.</p>
             </CardContent>
           </Card>
         )}
 
-        {/* Public Journal Entries Section */}
-        <div className="mb-6">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Public Journal Entries</h3>
-          <p className="text-gray-600">Sharing thoughts and adventures with the world ✨</p>
-        </div>
+        {/* Shared Journal Entries Section */}
+
 
         {entries.length === 0 ? (
           <Card className="border-2 border-dashed border-purple-200 bg-purple-50/50 mb-8">
             <CardContent className="p-12 text-center">
               <Globe className="w-16 h-16 text-purple-400 mx-auto mb-4" />
-              <h4 className="text-xl font-semibold text-gray-700 mb-2">No Public Entries Yet</h4>
+              <h4 className="text-xl font-semibold text-gray-700 mb-2">No Shared Entries Yet</h4>
               <p className="text-gray-600 mb-6">
-                This writer hasn't shared any public journal entries yet. Check back later!
+                This writer hasn't shared any journal entries yet. Check back later!
               </p>
               <Button
                 onClick={handleStartJournal}
@@ -170,11 +179,15 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
             {entries
               .sort((a, b) => Number(b.timestamp) - Number(a.timestamp))
               .map((entry) => (
-                <Card key={entry.id} className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+                <Card
+                  key={entry.id}
+                  className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all cursor-pointer group"
+                  onClick={() => handleEntryClick(entry.id)}
+                >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-xl font-bold text-gray-900 mb-2">
+                        <CardTitle className="text-xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors mb-2">
                           {entry.title}
                         </CardTitle>
                         <div className="flex items-center space-x-3">
@@ -183,7 +196,7 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
                           </span>
                           <Badge variant="default" className="text-xs">
                             <Globe className="w-3 h-3 mr-1" />
-                            Public
+                            Shared
                           </Badge>
                         </div>
                       </div>
@@ -191,13 +204,16 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
                   </CardHeader>
                   <CardContent className="pt-4">
                     <div className="flex gap-4">
-                      {/* Thumbnail commented out */}
-                      {/* {firstImageUrl && <img src={firstImageUrl} ... />} */}
-                      
                       <div className="flex-1 min-w-0">
-                        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                          {truncateContent(entry.content)}
-                        </p>
+                        <div
+                          className="text-gray-700 leading-relaxed line-clamp-3"
+                          dangerouslySetInnerHTML={{ __html: renderContent(entry.content) }}
+                        />
+                        {entry.content.length > 200 && (
+                          <p className="text-purple-600 text-sm mt-2 font-medium">
+                            Click to read more...
+                          </p>
+                        )}
                       </div>
                     </div>
                   </CardContent>

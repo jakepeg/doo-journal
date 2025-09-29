@@ -23,6 +23,21 @@ export default function Homepage() {
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
   const { mutate: deleteEntry } = useDeleteJournalEntry();
 
+  const renderContent = (content: string) => {
+  let html = content
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg my-4 shadow-md" crossorigin="anonymous" />')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-purple-300 pl-4 italic text-gray-600 my-2">$1</blockquote>')
+    .replace(/\n/g, '<br />');
+
+  // Wrap list items in ul
+  html = html.replace(/(<li>.*<\/li>)/s, '<ul class="list-disc list-inside space-y-1 my-4">$1</ul>');
+
+  return html;
+};
+
   useEffect(() => {
     console.log('[DEBUG] Homepage: State changed', {
       isLoading,
@@ -104,7 +119,7 @@ export default function Homepage() {
     <div className="min-h-screen flex flex-col">
       <div className="container mx-auto px-4 max-w-[1024px] flex-1 pb-8">
         {/* Profile Section */}
-        <Card className="mt-8 mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
+        <Card className="pt-0 mt-8 mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
           <div className="relative">
             <div className="h-48 bg-gradient-to-r from-purple-400 to-blue-400 relative">
               <div className="absolute inset-0 bg-black/20"></div>
@@ -144,17 +159,24 @@ export default function Homepage() {
           <div className="flex space-x-2">
             <Button
               onClick={handleShare}
-              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
+              variant="outline"
+              size="sm"
+              className="border-purple-200 hover:bg-purple-50"
             >
               <Share2 className="w-4 h-4 mr-2" />
-              Share Journal
+              Share
             </Button>
+
+
+
+
+
             <Button
               onClick={handleNewEntry}
               className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              New Entry
+              {/* <Plus className="w-4 h-4 mr-2" /> */}
+              New
             </Button>
           </div>
         </div>
@@ -168,10 +190,9 @@ export default function Homepage() {
               </p>
               <Button 
                 onClick={handleNewEntry}
-                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
+                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-8 py-7 text-xl rounded-full shadow-md transition transform hover:scale-105 active:scale-95 mx-auto flex items-center gap-2"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Write First Entry
+                💖  Write First Entry
               </Button>
             </CardContent>
           </Card>
@@ -236,20 +257,22 @@ export default function Homepage() {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="pt-4">
-                    <div className="flex gap-4">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-gray-700 leading-relaxed">
-                          {truncateContent(entry.content)}
-                        </p>
-                        {entry.content.length > 200 && (
-                          <p className="text-purple-600 text-sm mt-2 font-medium">
-                            Click to read more...
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
+<CardContent className="pt-4">
+  <div className="flex gap-4">
+    <div className="flex-1 min-w-0">
+      <div
+        className="text-gray-700 leading-relaxed line-clamp-3"
+        dangerouslySetInnerHTML={{ __html: renderContent(entry.content) }}
+      />
+      {entry.content.length > 200 && (
+        <p className="text-purple-600 text-sm mt-2 font-medium">
+          Click to read more...
+        </p>
+      )}
+    </div>
+  </div>
+</CardContent>
+
                 </Card>
               ))}
           </div>

@@ -4,12 +4,12 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
-import { Calendar } from './ui/calendar';
+import { Calendar } from './ui/calendar-basic';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { useCreateJournalEntry, useUpdateJournalEntry } from '../hooks/useQueries';
 // import { useFileUpload } from '../blob-storage/FileStorage';
 import type { JournalEntry } from '../../../declarations/journal_backend/journal_backend.did';
-import RichTextEditor from './RichTextEditor';
+import RichTextEditor from './RichTextEditor-new';
 import EmojiPicker from './EmojiPicker';
 import { BookOpen, Globe, Lock, Calendar as CalendarIcon, Smile, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
@@ -25,8 +25,6 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
   const [content, setContent] = useState('');
   const [isPublic, setIsPublic] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [imagePath, setImagePath] = useState<string>('');
 
   const { mutate: createEntry, isPending: isCreating } = useCreateJournalEntry();
@@ -70,7 +68,6 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
 
   const handleEmojiSelect = (emoji: string) => {
     setContent(prev => prev + emoji);
-    setShowEmojiPicker(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -140,9 +137,10 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
               <Label className="text-sm font-semibold text-gray-700">
                 Entry Date 📅
               </Label>
-              <Popover open={showCalendar} onOpenChange={setShowCalendar}>
-                <PopoverTrigger asChild>
+              <Popover>
+                <PopoverTrigger>
                   <Button
+                    type="button"
                     variant="outline"
                     className="w-full justify-start text-left font-normal border-2 border-purple-200 hover:border-purple-400"
                   >
@@ -150,17 +148,17 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
                     {format(selectedDate, 'PPP')}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-[280px] p-4 bg-white">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
                     onSelect={(date) => {
                       if (date) {
+                        console.log('Date selected:', date);
                         setSelectedDate(date);
-                        setShowCalendar(false);
                       }
                     }}
-                    initialFocus
+                    className="rounded-md border"
                   />
                 </PopoverContent>
               </Popover>
@@ -174,8 +172,8 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
                 Your Story 📝
               </Label>
               <div className="flex items-center space-x-2">
-                <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
-                  <PopoverTrigger asChild>
+                <Popover>
+                  <PopoverTrigger>
                     <Button
                       type="button"
                       variant="outline"
@@ -186,7 +184,7 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
                       Emoji
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-80 p-0" align="end">
+                  <PopoverContent className="w-80 p-0 bg-white rounded-lg shadow-lg border border-purple-100" align="end">
                     <EmojiPicker onEmojiSelect={handleEmojiSelect} />
                   </PopoverContent>
                 </Popover>
@@ -232,7 +230,7 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
           </div>
 
           {/* Privacy Settings */}
-          <div className="flex items-center justify-between p-4 bg-white/60 rounded-lg border border-purple-200">
+          <div className="flex items-center justify-between p-4 rounded-lg border-2 border-purple-200">
             <div className="flex items-center space-x-3">
               {isPublic ? (
                 <Globe className="w-5 h-5 text-green-600" />
@@ -255,6 +253,7 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
               id="privacy"
               checked={isPublic}
               onCheckedChange={setIsPublic}
+              className="bg-red-400 data-[state=checked]:bg-green-500"
             />
           </div>
 
