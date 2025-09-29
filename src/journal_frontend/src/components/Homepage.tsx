@@ -175,8 +175,8 @@ export default function Homepage() {
               onClick={handleNewEntry}
               className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              New Entry
+              {/* <Plus className="w-4 h-4 mr-2" /> */}
+              New
             </Button>
           </div>
         </div>
