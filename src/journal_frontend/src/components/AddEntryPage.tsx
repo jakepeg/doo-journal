@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Calendar } from './ui/calendar-basic';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { useCreateJournalEntry } from '../hooks/useQueries';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
 // import { useFileUpload } from '../blob-storage/FileStorage';
 import RichTextEditor from './RichTextEditor-new';
 import EmojiPicker from './EmojiPicker';
@@ -21,6 +22,7 @@ export default function AddEntryPage() {
   console.log('[DEBUG] AddEntryPage: Component mounting');
   
   const navigate = useNavigate();
+  const { identity } = useInternetIdentity();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isPublic, setIsPublic] = useState(false);
@@ -28,6 +30,14 @@ export default function AddEntryPage() {
   const [imagePath, setImagePath] = useState<string>('');
 
   const { mutate: createEntry, isPending } = useCreateJournalEntry();
+
+  // Redirect to home if user is not authenticated
+  useEffect(() => {
+    if (!identity) {
+      console.log('[DEBUG] AddEntryPage: No identity found, redirecting to home');
+      navigate({ to: '/' });
+    }
+  }, [identity, navigate]);
   // const { uploadFile, isUploading } = useFileUpload();
 
   const handleSubmit = (e: React.FormEvent) => {

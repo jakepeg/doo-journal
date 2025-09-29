@@ -1,11 +1,22 @@
+import { useEffect } from 'react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { ArrowLeft } from 'lucide-react';
 
 export default function PrivacyPolicyPage() {
+  const navigate = useNavigate();
   const { identity } = useInternetIdentity();
   const isAuthenticated = !!identity;
+
+  // Redirect to home if user is not authenticated
+  useEffect(() => {
+    if (!identity) {
+      console.log('[DEBUG] PrivacyPolicyPage: No identity found, redirecting to home');
+      navigate({ to: '/' });
+    }
+  }, [identity, navigate]);
 
   return (
     <>
