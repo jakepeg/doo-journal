@@ -164,8 +164,13 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
       {/* Header for public viewers */}
       {!isAuthenticated && (
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {authorProfile?.name ? `${authorProfile.name}'s Journal` : "Journal"}
+          <h2
+            className="text-2xl font-bold text-gray-900 cursor-pointer hover:underline"
+            onClick={() =>
+              navigate({ to: '/?user=' + userId })
+            }
+          >
+            {authorProfile?.name ? `${authorProfile.name}'s Shared Journal` : "Journal"}
           </h2>
           <div className="flex items-center space-x-2">
             {finalEntry.isPublic && (

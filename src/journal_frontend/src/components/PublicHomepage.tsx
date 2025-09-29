@@ -2,11 +2,12 @@ import { useGetUserHomepage } from '../hooks/useQueries';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { Globe, Sparkles } from 'lucide-react';
+import { Globe, Sparkles, Share2 } from 'lucide-react';
 import { Principal } from '@dfinity/principal';
 import { useState } from 'react';
 import { useActor } from '../hooks/useActor';
 import { useNavigate } from '@tanstack/react-router';
+import { toast } from 'sonner';
 
 interface PublicHomepageProps {
   user: Principal;
@@ -37,6 +38,13 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
     window.location.href = window.location.origin;
   };
 
+  const handleShare = () => {
+    const shareUrl = `${window.location.origin}?user=${user.toString()}`;
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => toast.success('Profile link copied to clipboard!'))
+      .catch(() => toast.error('Failed to copy link'));
+  };
+
   const handleEntryClick = (entryId: string) => {
     const userId = user.toString();
     navigate({ to: '/entry/$userId/$entryId', params: { userId, entryId } });
@@ -54,16 +62,25 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
     return (
       <div className="flex flex-col flex-1">
         <div className="container mx-auto px-4 py-4 max-w-[1024px] flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Shared Journal
-          </h2>
-          <Button
-            onClick={handleStartJournal}
-            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            Start Your Own Journal
-          </Button>
+          <h2 className="text-2xl font-bold text-gray-900">Shared Journal</h2>
+          <div className="flex items-center space-x-2">
+            <Button
+              onClick={handleShare}
+              variant="outline"
+              size="sm"
+              className="border-purple-200 hover:bg-purple-50"
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              Share
+            </Button>
+            <Button
+              onClick={handleStartJournal}
+              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Start Your Own Journal
+            </Button>
+          </div>
         </div>
         
         <div className="flex items-center justify-center flex-1">
@@ -84,15 +101,26 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
       {/* Title Bar */}
       <div className="container mx-auto px-4 py-4 max-w-[1024px] flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">
-          {profile?.name ? `${profile.name}'s Journal` : "Shared Journal"}
+          {profile?.name ? `${profile.name}'s Shared Journal` : "Shared Journal"}
         </h2>
-        <Button
-          onClick={handleStartJournal}
-          className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
-        >
-          <Sparkles className="w-4 h-4 mr-2" />
-          Start Your Own Journal
-        </Button>
+        <div className="flex items-center space-x-2">
+          <Button
+            onClick={handleShare}
+            variant="outline"
+            size="sm"
+            className="border-purple-200 hover:bg-purple-50"
+          >
+            <Share2 className="w-4 h-4 mr-2" />
+            Share
+          </Button>
+          <Button
+            onClick={handleStartJournal}
+            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Start Your Own Journal
+          </Button>
+        </div>
       </div>
 
       <main className="container mx-auto px-4 max-w-[1024px] flex-1 mb-8">
@@ -127,9 +155,7 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
         )}
 
         {/* Shared Journal Entries Section */}
-        <div className="mb-6">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Shared Journal Entries</h3>
-        </div>
+
 
         {entries.length === 0 ? (
           <Card className="border-2 border-dashed border-purple-200 bg-purple-50/50 mb-8">
