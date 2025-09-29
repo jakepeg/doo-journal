@@ -139,19 +139,13 @@ export default function AddEntryPage() {
       </div>
 
       <main className="container mx-auto px-4 pb-8 max-w-[1024px] flex-1 mb-8">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-            New Journal Entry
-          </h2>
-        </div>
-
         <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-blue-400 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm">✨</span>
               </div>
-              Create Your Story
+              Create A New Journal Entry
             </CardTitle>
           </CardHeader>
           <CardContent>

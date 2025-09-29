@@ -19,7 +19,7 @@ export default function TopNavigation() {
   };
 
   return (
-<header className="sticky top-0 z-40">
+<header className="sticky top-0 z-40 bg-gradient-to-r from-purple-50 to-blue-50 border-b border-purple-200 shadow-sm">
   <div className="w-full px-6 py-4">
     <div className="flex items-center justify-between">
       {/* Logo / Title */}

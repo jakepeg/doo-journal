@@ -36,7 +36,21 @@ function App() {
       <RouterProvider router={router} />
       <OfflineIndicator />
       <PWAInstallPrompt />
-      <Toaster position="top-right" richColors closeButton />
+      <Toaster 
+        position="top-right" 
+        richColors 
+        closeButton 
+        toastOptions={{
+          style: {
+            minWidth: '300px',
+            maxWidth: '400px',
+            height: 'auto',
+            minHeight: '50px',
+            padding: '12px 16px',
+          },
+          className: 'rounded-lg shadow-lg',
+        }}
+      />
     </ThemeProvider>
   );
 }
