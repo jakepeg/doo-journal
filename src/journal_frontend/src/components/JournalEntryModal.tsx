@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -24,12 +24,12 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isPublic, setIsPublic] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [imagePath, setImagePath] = useState<string>('');
 
   const { mutate: createEntry, isPending: isCreating } = useCreateJournalEntry();
   const { mutate: updateEntry, isPending: isUpdating } = useUpdateJournalEntry();
-  // const { uploadFile, isUploading } = useFileUpload();
+  const [isUploading, setIsUploading] = useState(false);
 
   const isEditing = !!entry;
   const isPending = isCreating || isUpdating;
@@ -44,31 +44,53 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
     }
   }, [entry]);
 
-  /*
-  const handleImageUpload = async (file: File) => {
+  const handleImageUpload = useCallback(async (file: File) => {
     if (!file.type.startsWith('image/')) {
       toast.error('Please select an image file');
       return;
     }
 
+    // Validate file size (max 5MB for journal images)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be smaller than 5MB');
+      return;
+    }
+
+    setIsUploading(true);
+    
     try {
-      const path = `journal-images/${Date.now()}-${file.name}`;
-      const result = await uploadFile(path, file);
+      // Convert image to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+      });
+      reader.readAsDataURL(file);
+      const base64String = await base64Promise;
       
-      setImagePath(result.path);
-      const imageMarkdown = `![${file.name}](${result.url})`;
-      setContent(prev => prev + '\n\n' + imageMarkdown);
+      // Store the base64 string as the image path
+      setImagePath(base64String);
+      
+      // Insert image HTML directly into the content at cursor position
+      const imageHtml = `<img src="${base64String}" alt="${file.name}" style="max-width: 100%; height: auto; margin: 10px 0;" />`;
+      setContent(prev => prev + imageHtml);
+      
       toast.success('Image uploaded and inserted!');
     } catch (error) {
       console.error('Image upload error:', error);
       toast.error('Failed to upload image');
+    } finally {
+      setIsUploading(false);
     }
-  };
-  */
+  }, []);
 
-  const handleEmojiSelect = (emoji: string) => {
+  const handleEmojiSelect = useCallback((emoji: string) => {
     setContent(prev => prev + emoji);
-  };
+  }, []);
+
+  const handleContentChange = useCallback((newContent: string) => {
+    setContent(newContent);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,7 +160,7 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
                 Entry Date 📅
               </Label>
               <Popover>
-                <PopoverTrigger>
+                <PopoverTrigger asChild>
                   <Button
                     type="button"
                     variant="outline"
@@ -173,7 +195,7 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
               </Label>
               <div className="flex items-center space-x-2">
                 <Popover>
-                  <PopoverTrigger>
+                  <PopoverTrigger asChild>
                     <Button
                       type="button"
                       variant="outline"
@@ -189,42 +211,16 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
                   </PopoverContent>
                 </Popover>
                 
-                {/* Image upload (disabled for now) */}
-                {/*
-                <label className="cursor-pointer">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="border-purple-200 hover:border-purple-400"
-                    disabled={isUploading}
-                    asChild
-                  >
-                    <span>
-                      <ImageIcon className="w-4 h-4 mr-1" />
-                      {isUploading ? 'Uploading...' : 'Image'}
-                    </span>
-                  </Button>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleImageUpload(file);
-                      e.target.value = '';
-                    }}
-                    className="hidden"
-                    disabled={isUploading}
-                  />
-                </label>
-                */}
+
               </div>
             </div>
             <RichTextEditor
+              key="journal-editor-modal" // Stable key to prevent re-mounting
               value={content}
-              onChange={setContent}
+              onChange={handleContentChange}
               placeholder="Write about your day, your dreams, your adventures... Let your imagination flow!"
               maxLength={2000}
+              onImageUpload={handleImageUpload}
             />
             <p className="text-xs text-gray-500">{content.length}/2000 characters</p>
           </div>

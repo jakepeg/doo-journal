@@ -29,10 +29,20 @@ export default function Homepage() {
   let html = content
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg my-4 shadow-md" crossorigin="anonymous" />')
+    .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg my-4 shadow-md max-h-[150px] object-contain" crossorigin="anonymous" />')
     .replace(/^- (.+)$/gm, '<li>$1</li>')
     .replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-purple-300 pl-4 italic text-gray-600 my-2">$1</blockquote>')
     .replace(/\n/g, '<br />');
+
+  // Also handle direct HTML img tags from Quill editor - limit their height on homepage
+  html = html.replace(/<img([^>]*?)style="([^"]*?)"([^>]*?)>/g, (match, beforeStyle, styleContent, afterStyle) => {
+    // Add max-height to existing style, preserving original styling
+    const newStyle = styleContent + '; max-height: 150px; object-fit: contain;';
+    return `<img${beforeStyle}style="${newStyle}"${afterStyle} class="rounded-lg my-4 shadow-md">`;
+  });
+
+  // Handle HTML img tags without style attribute
+  html = html.replace(/<img(?![^>]*style=)([^>]*?)>/g, '<img$1 style="max-height: 150px; object-fit: contain;" class="max-w-full h-auto rounded-lg my-4 shadow-md">');
 
   // Wrap list items in ul
   html = html.replace(/(<li>.*<\/li>)/s, '<ul class="list-disc list-inside space-y-1 my-4">$1</ul>');

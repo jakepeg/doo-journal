@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -22,16 +22,26 @@ export default function AddEntryPage() {
   console.log('[DEBUG] AddEntryPage: Component mounting');
   
   const navigate = useNavigate();
-  const { identity } = useInternetIdentity();
+  const { identity, loginStatus } = useInternetIdentity();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isPublic, setIsPublic] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [imagePath, setImagePath] = useState<string>('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isMounted, setIsMounted] = useState(true);
+  const isAuthenticatedRef = useRef(false);
 
   const { mutate: createEntry, isPending } = useCreateJournalEntry();
 
-  // Redirect to home if user is not authenticated
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      setIsMounted(false);
+    };
+  }, []);
+
+  // Simple authentication check
   useEffect(() => {
     if (!identity) {
       console.log('[DEBUG] AddEntryPage: No identity found, redirecting to home');
@@ -77,44 +87,59 @@ export default function AddEntryPage() {
     });
   };
 
-  // const handleImageUpload = async (file: File) => {
-  //   console.log('[DEBUG] AddEntryPage: Image upload started', {
-  //     fileName: file.name,
-  //     fileSize: file.size,
-  //     fileType: file.type
-  //   });
+  const handleImageUpload = useCallback(async (file: File) => {
+    console.log('[DEBUG] AddEntryPage: Image upload started', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type
+    });
     
-  //   if (!file.type.startsWith('image/')) {
-  //     toast.error('Please select an image file');
-  //     return;
-  //   }
+    setIsUploadingImage(true);
+    
+    try {
+      // Convert image to base64 for backend storage
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+      });
+      reader.readAsDataURL(file);
+      const base64String = await base64Promise;
+      
+      console.log('[DEBUG] AddEntryPage: Image converted to base64');
+      
+      // Only update state if component is still mounted
+      if (isMounted) {
+        // Store the base64 string as the image path for backend
+        setImagePath(base64String);
+        console.log('[DEBUG] AddEntryPage: Image path set for backend storage');
+      }
+    } catch (error) {
+      console.error('[DEBUG] AddEntryPage: Image upload error:', error);
+    } finally {
+      if (isMounted) {
+        setIsUploadingImage(false);
+      }
+    }
+  }, [isMounted]);
 
-  //   try {
-  //     const path = `journal-images/${Date.now()}-${file.name}`;
-  //     const result = await uploadFile(path, file);
-      
-  //     console.log('[DEBUG] AddEntryPage: Image uploaded successfully', {
-  //       path: result.path,
-  //       url: result.url
-  //     });
-      
-  //     // Store the image path for the backend
-  //     setImagePath(result.path);
-      
-  //     // Insert image markdown into content using the url property
-  //     const imageMarkdown = `![${file.name}](${result.url})`;
-  //     setContent(prev => prev + '\n\n' + imageMarkdown);
-  //     toast.success('Image uploaded and inserted!');
-  //   } catch (error) {
-  //     console.error('[DEBUG] AddEntryPage: Image upload error:', error);
-  //     toast.error('Failed to upload image');
-  //   }
-  // };
-
-  const handleEmojiSelect = (emoji: string) => {
+  const handleEmojiSelect = useCallback((emoji: string) => {
     console.log('[DEBUG] AddEntryPage: Emoji selected', { emoji });
-    setContent(prev => prev + emoji);
-  };
+    setContent(prev => {
+      console.log('[DEBUG] AddEntryPage: Updating content with emoji');
+      return prev + emoji;
+    });
+  }, []);
+
+  const handleContentChange = useCallback((newContent: string) => {
+    console.log('[DEBUG] AddEntryPage: Content changed', { 
+      length: newContent.length, 
+      hasIdentity: !!identity,
+      loginStatus,
+      isAuthenticatedRef: isAuthenticatedRef.current
+    });
+    setContent(newContent);
+  }, [identity, loginStatus]);
 
   const handleBackToJournal = () => {
     console.log('[DEBUG] AddEntryPage: Back to journal clicked');
@@ -172,7 +197,7 @@ export default function AddEntryPage() {
     Entry Date 📅
   </Label>
   <Popover>
-    <PopoverTrigger>
+    <PopoverTrigger asChild>
       <Button
         type="button"
         variant="outline"
@@ -209,7 +234,7 @@ export default function AddEntryPage() {
                   </Label>
                   <div className="flex items-center space-x-2">
                     <Popover>
-                      <PopoverTrigger>
+                      <PopoverTrigger asChild>
                         <Button
                           type="button"
                           variant="outline"
@@ -255,10 +280,12 @@ export default function AddEntryPage() {
                   </div>
                 </div>
                 <RichTextEditor
+                  key="journal-editor" // Stable key to prevent re-mounting
                   value={content}
-                  onChange={setContent}
+                  onChange={handleContentChange}
                   placeholder="Write about your day, your dreams, your adventures... Let your imagination flow!"
                   maxLength={2000}
+                  onImageUpload={handleImageUpload}
                 />
                 <p className="text-xs text-gray-500">{content.length}/2000 characters</p>
               </div>
