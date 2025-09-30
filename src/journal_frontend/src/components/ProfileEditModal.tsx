@@ -181,7 +181,7 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
         
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Profile Picture Upload */}
-          <div className="text-center space-y-4">
+          <div className="text-center">
             <div className="relative inline-block">
               <Avatar className="w-24 h-24 border-4 border-purple-200 shadow-lg">
                 <AvatarImage 
@@ -194,43 +194,98 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
                 </AvatarFallback>
               </Avatar>
               
-              {profilePicturePreview && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={removeProfilePicture}
-                  className="absolute -top-2 -right-2 rounded-full w-8 h-8 p-0 bg-red-100 hover:bg-red-200 border-red-300"
-                >
-                  <X className="w-4 h-4 text-red-600" />
-                </Button>
+              <input
+                type="file"
+                id="profile-picture"
+                accept="image/*"
+                onChange={handleProfilePictureUpload}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (profilePicturePreview) {
+                    removeProfilePicture();
+                  } else {
+                    document.getElementById('profile-picture')?.click();
+                  }
+                }}
+                className="absolute -top-2 -right-2 rounded-full w-8 h-8 p-0 bg-white hover:bg-gray-50 border-gray-300 shadow-lg"
+              >
+                <Camera className="w-4 h-4 text-gray-600" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Cover Image Upload */}
+          <div className="space-y-4">
+            <Label className="text-sm font-semibold text-gray-700">
+              Cover Image 🖼️
+            </Label>
+            
+            {/* Cover Image Preview */}
+            <div className="relative w-full h-32 bg-gradient-to-r from-purple-100 to-blue-100 border-2 border-purple-200 rounded-lg overflow-hidden">
+              {coverImagePreview ? (
+                <>
+                  <img 
+                    src={coverImagePreview} 
+                    alt="Cover image preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <input
+                    type="file"
+                    id="cover-image"
+                    accept="image/*"
+                    onChange={handleCoverImageUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (coverImagePreview) {
+                        removeCoverImage();
+                      } else {
+                        document.getElementById('cover-image')?.click();
+                      }
+                    }}
+                    className="absolute top-2 right-2 rounded-full w-8 h-8 p-0 bg-white hover:bg-gray-50 border-gray-300 shadow-lg"
+                  >
+                    <Camera className="w-4 h-4 text-gray-600" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-center h-full text-gray-400">
+                    <div className="text-center">
+                      <Image className="w-8 h-8 mx-auto mb-2" />
+                      <p className="text-sm">No cover image</p>
+                    </div>
+                  </div>
+                  <input
+                    type="file"
+                    id="cover-image"
+                    accept="image/*"
+                    onChange={handleCoverImageUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('cover-image')?.click()}
+                    className="absolute top-2 right-2 rounded-full w-8 h-8 p-0 bg-white hover:bg-gray-50 border-gray-300 shadow-lg"
+                  >
+                    <Camera className="w-4 h-4 text-gray-600" />
+                  </Button>
+                </>
               )}
             </div>
             
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-700">
-                Profile Picture 📸
-              </Label>
-              <div className="flex items-center justify-center">
-                <input
-                  type="file"
-                  id="profile-picture"
-                  accept="image/*"
-                  onChange={handleProfilePictureUpload}
-                  className="hidden"
-                />
-                <Label
-                  htmlFor="profile-picture"
-                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-100 to-blue-100 hover:from-purple-200 hover:to-blue-200 border border-purple-300 rounded-lg cursor-pointer transition-colors"
-                >
-                  {profilePicture ? <Camera className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
-                  <span className="text-sm font-medium">
-                    {profilePicture ? 'Change Picture' : 'Upload Picture'}
-                  </span>
-                </Label>
-              </div>
-              <p className="text-xs text-gray-500">Max 5MB • JPG, PNG, GIF</p>
-            </div>
+            <p className="text-xs text-gray-500 text-center">Max 10MB • JPG, PNG, GIF • Recommended: 800x200px</p>
           </div>
 
           {/* Name */}
@@ -263,63 +318,6 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
               maxLength={200}
             />
             <p className="text-xs text-gray-500">{bio.length}/200 characters</p>
-          </div>
-
-          {/* Cover Image Upload */}
-          <div className="space-y-4">
-            <Label className="text-sm font-semibold text-gray-700">
-              Cover Image 🖼️
-            </Label>
-            
-            {/* Cover Image Preview */}
-            <div className="relative w-full h-32 bg-gradient-to-r from-purple-100 to-blue-100 border-2 border-purple-200 rounded-lg overflow-hidden">
-              {coverImagePreview ? (
-                <>
-                  <img 
-                    src={coverImagePreview} 
-                    alt="Cover image preview"
-                    className="w-full h-full object-cover"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={removeCoverImage}
-                    className="absolute top-2 right-2 rounded-full w-8 h-8 p-0 bg-red-100 hover:bg-red-200 border-red-300"
-                  >
-                    <X className="w-4 h-4 text-red-600" />
-                  </Button>
-                </>
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-400">
-                  <div className="text-center">
-                    <Image className="w-8 h-8 mx-auto mb-2" />
-                    <p className="text-sm">No cover image</p>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {/* Upload Button */}
-            <div className="flex items-center justify-center">
-              <input
-                type="file"
-                id="cover-image"
-                accept="image/*"
-                onChange={handleCoverImageUpload}
-                className="hidden"
-              />
-              <Label
-                htmlFor="cover-image"
-                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-100 to-blue-100 hover:from-purple-200 hover:to-blue-200 border border-purple-300 rounded-lg cursor-pointer transition-colors"
-              >
-                {coverImage ? <Camera className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
-                <span className="text-sm font-medium">
-                  {coverImage ? 'Change Cover' : 'Upload Cover'}
-                </span>
-              </Label>
-            </div>
-            <p className="text-xs text-gray-500 text-center">Max 10MB • JPG, PNG, GIF • Recommended: 800x200px</p>
           </div>
 
           <div className="flex space-x-3 pt-4">
