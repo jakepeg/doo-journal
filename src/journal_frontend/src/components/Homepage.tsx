@@ -203,8 +203,8 @@ export default function Homepage() {
               </Avatar>
             </div>
           </div>
-          <CardContent className="px-6 pt-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          <CardContent className="px-6 pt-6">
+            <h2 className="text-3xl text-gray-900 mb-2">
               {profile?.name || 'Anonymous Writer'}
             </h2>
             {profile?.bio && <p className="text-gray-600 text-lg mb-4">{profile.bio}</p>}
@@ -218,7 +218,7 @@ export default function Homepage() {
 
         {/* Journal Entries Section */}
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-2xl font-bold text-gray-900">My Journal Entries</h3>
+          <h3 className="text-2xl text-gray-900">My Journal Entries</h3>
           <div className="flex space-x-2">
             <Button
               onClick={handleShare}
@@ -266,10 +266,10 @@ export default function Homepage() {
               .map((entry) => (
                 <Card 
                   key={entry.id}
-                  className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all cursor-pointer group"
+                  className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all cursor-pointer group gap-0"
                   onClick={() => handleEntryClick(entry)}
                 >
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-1">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <CardTitle className="text-xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors mb-2">
@@ -320,7 +320,7 @@ export default function Homepage() {
                       </div>
                     </div>
                   </CardHeader>
-<CardContent className="pt-4">
+<CardContent className="pt-1">
   <div className="flex gap-4">
     <div className="flex-1 min-w-0">
       <div
