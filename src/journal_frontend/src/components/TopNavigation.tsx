@@ -1,7 +1,7 @@
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from './ui/button';
-import { LogOut, LogIn } from 'lucide-react';
+// import { LogOut, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
 import DooLogo from './DooLogo';
 import { Link } from '@tanstack/react-router';
@@ -40,7 +40,7 @@ export default function TopNavigation() {
             onClick={handleLogout}
             className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
           >
-            <LogOut className="w-4 h-4 mr-2" />
+            {/* <LogOut className="w-4 h-4 mr-2" /> */}
             Logout
           </Button>
         ) : (
@@ -49,7 +49,7 @@ export default function TopNavigation() {
             disabled={isLoggingIn}
             className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
           >
-            <LogIn className="w-4 h-4 mr-2" />
+            {/* <LogIn className="w-4 h-4 mr-2" /> */}
             {isLoggingIn ? 'Starting...' : 'Login'}
           </Button>
         )}
