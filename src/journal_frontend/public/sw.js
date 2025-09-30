@@ -1,14 +1,12 @@
-const CACHE_NAME = 'my-journal-v1';
-const STATIC_CACHE = 'my-journal-static-v1';
-const DYNAMIC_CACHE = 'my-journal-dynamic-v1';
+const CACHE_NAME = 'doo-journal-v1';
+const STATIC_CACHE = 'doo-journal-static-v1';
+const DYNAMIC_CACHE = 'doo-journal-dynamic-v1';
 
-// Assets to cache immediately
+// Assets to cache immediately (remove non-existent icon references since icons are embedded in manifest)
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-  // Add other static assets as needed
+  // Icons are embedded as base64 in manifest.json, so no separate files needed
 ];
 
 // Install event - cache static assets

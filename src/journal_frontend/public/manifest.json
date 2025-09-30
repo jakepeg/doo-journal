@@ -1,6 +1,6 @@
 {
-  "name": "My Journal - Kids Journaling App",
-  "short_name": "My Journal",
+  "name": "Doo Journal - Kids Journaling App",
+  "short_name": "Doo Journal",
   "description": "A magical place for kids to write, dream, and grow! Create your personal journal with privacy controls.",
   "start_url": "/",
   "display": "standalone",
