@@ -4,18 +4,28 @@ import { Button } from './ui/button';
 // import { LogOut, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
 import DooLogo from './DooLogo';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 
 export default function TopNavigation() {
   const { identity, login, clear, isLoggingIn } = useInternetIdentity();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const isAuthenticated = !!identity && !identity.getPrincipal().isAnonymous();
 
   const handleLogout = async () => {
-    await clear();
-    queryClient.clear();
-    toast.success('Logged out successfully');
+    try {
+      await clear();
+      queryClient.clear();
+      toast.success('Logged out successfully');
+      // Small delay to ensure auth state is fully cleared before redirect
+      setTimeout(() => {
+        navigate({ to: '/' });
+      }, 100);
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Logout failed');
+    }
   };
 
   return (

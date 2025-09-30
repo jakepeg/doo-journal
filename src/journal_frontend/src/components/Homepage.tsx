@@ -190,24 +190,24 @@ export default function Homepage() {
                 <Edit className="w-4 h-4" />
               </Button>
             </div>
-            <div className="absolute left-6 -bottom-10">
-              <Avatar className="w-20 h-20 border-4 border-white shadow-lg">
+            <div className="absolute left-6 -bottom-12">
+              <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
                 <AvatarImage 
                   src={profile?.profilePicture && profile.profilePicture.length > 0 ? profile.profilePicture[0] : undefined}
                   alt={`${profile?.name || 'User'}'s profile picture`}
                   className="object-cover"
                 />
-                <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-400 text-white text-2xl font-bold">
+                <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-400 text-white text-3xl font-bold">
                   {profile?.name?.charAt(0).toUpperCase() || '?'}
                 </AvatarFallback>
               </Avatar>
             </div>
           </div>
           <CardContent className="px-6 pt-6">
-            <h2 className="text-3xl text-gray-900 mb-2">
+            <h2 className="text-3xl text-gray-900 mt-1 mb-1">
               {profile?.name || 'Anonymous Writer'}
             </h2>
-            {profile?.bio && <p className="text-gray-600 text-lg mb-4">{profile.bio}</p>}
+            {profile?.bio && <p className="text-gray-600 text-lg mb-2">{profile.bio}</p>}
             <div className="flex items-center space-x-4 text-sm text-gray-500">
               <span>{entries.length} journal entries</span>
               <span>{entries.filter(e => e.isPublic).length} public</span>
