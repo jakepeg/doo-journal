@@ -46,11 +46,40 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
     }
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     const shareUrl = `${window.location.origin}/entry/${userId}/${entryId}`;
-    navigator.clipboard.writeText(shareUrl)
-      .then(() => toast.success('Entry link copied to clipboard!'))
-      .catch(() => toast.error('Failed to copy link'));
+    
+    try {
+      // Try fallback method first (more reliable on IC)
+      const textArea = document.createElement('textarea');
+      textArea.value = shareUrl;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      if (successful) {
+        toast.success('Entry link copied to clipboard!');
+        return;
+      }
+      
+      // If fallback fails, try modern API
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success('Entry link copied to clipboard!');
+      } else {
+        throw new Error('Clipboard not supported');
+      }
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      // Show the URL in a prompt for manual copying
+      prompt('Copy this link:', shareUrl);
+    }
   };
 
   const handleStartJournal = () => {

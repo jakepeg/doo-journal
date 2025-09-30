@@ -70,12 +70,42 @@ export default function Homepage() {
     navigate({ to: '/add-entry' });
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     if (!identity) return;
+    
     const shareUrl = `${window.location.origin}?user=${identity.getPrincipal().toString()}`;
-    navigator.clipboard.writeText(shareUrl)
-      .then(() => toast.success('Profile link copied to clipboard!'))
-      .catch(() => toast.error('Failed to copy link'));
+    
+    try {
+      // Try fallback method first (more reliable on IC)
+      const textArea = document.createElement('textarea');
+      textArea.value = shareUrl;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      if (successful) {
+        toast.success('Profile link copied to clipboard!');
+        return;
+      }
+      
+      // If fallback fails, try modern API
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success('Profile link copied to clipboard!');
+      } else {
+        throw new Error('Clipboard not supported');
+      }
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      // Show the URL in a prompt for manual copying
+      prompt('Copy this link:', shareUrl);
+    }
   };
 
   const formatEntryDate = (date: bigint) =>
