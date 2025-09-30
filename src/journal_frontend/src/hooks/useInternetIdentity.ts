@@ -28,7 +28,7 @@ export type InternetIdentityContext = {
     loginError?: Error;
 };
 
-const ONE_HOUR_IN_NANOSECONDS = BigInt(3_600_000_000_000);
+const THIRTY_DAYS_IN_NANOSECONDS = BigInt(30 * 24 * 3_600_000_000_000); // 30 days
 const DEFAULT_IDENTITY_PROVIDER = import.meta.env.VITE_II_URL;
 
 // 🔍 Debug: see what URL Vite is injecting from .env.local
@@ -118,7 +118,7 @@ export function InternetIdentityProvider({
             identityProvider: DEFAULT_IDENTITY_PROVIDER,
             onSuccess: handleLoginSuccess,
             onError: handleLoginError,
-            maxTimeToLive: ONE_HOUR_IN_NANOSECONDS
+            maxTimeToLive: THIRTY_DAYS_IN_NANOSECONDS
         };
 
         setStatus('logging-in');
@@ -159,6 +159,18 @@ export function InternetIdentityProvider({
                 if (cancelled) return;
                 if (isAuthenticated) {
                     const loadedIdentity = existingClient.getIdentity();
+                    
+                    // Additional check for delegation validity on mainnet
+                    if (loadedIdentity instanceof DelegationIdentity) {
+                        const delegation = loadedIdentity.getDelegation();
+                        if (!isDelegationValid(delegation)) {
+                            console.log('[Auth] Delegation expired, clearing auth state');
+                            await existingClient.logout();
+                            setIdentity(undefined);
+                            return;
+                        }
+                    }
+                    
                     setIdentity(loadedIdentity);
                 }
             } catch (unknownError) {
