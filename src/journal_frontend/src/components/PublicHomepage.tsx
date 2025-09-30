@@ -2,6 +2,7 @@ import { useGetUserHomepage } from '../hooks/useQueries';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Globe, Sparkles, Share2 } from 'lucide-react';
 import { Principal } from '@dfinity/principal';
 import { useState } from 'react';
@@ -155,22 +156,44 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
       <main className="container mx-auto px-4 max-w-[1024px] flex-1 mb-8">
         {/* Profile Section */}
         {profile ? (
-          <Card className="mt-8 mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
+          <Card className="pt-0 mt-8 mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
+            <div className="relative">
+              <div className="h-48 bg-gradient-to-r from-purple-400 to-blue-400 relative overflow-hidden">
+                {profile?.coverImage && profile.coverImage.length > 0 ? (
+                  <img 
+                    src={profile.coverImage[0]} 
+                    alt="Cover image"
+                    className="w-full h-full object-cover"
+                  />
+                ) : null}
+                <div className="absolute inset-0 bg-black/20"></div>
+              </div>
+              <div className="absolute left-6 -bottom-10">
+                <Avatar className="w-20 h-20 border-4 border-white shadow-lg">
+                  <AvatarImage 
+                    src={profile?.profilePicture && profile.profilePicture.length > 0 ? profile.profilePicture[0] : undefined}
+                    alt={`${profile?.name || 'User'}'s profile picture`}
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-400 text-white text-2xl font-bold">
+                    {profile?.name?.charAt(0).toUpperCase() || '?'}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+            </div>
             <CardContent className="px-6 pt-12">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                  {profile.name}
-                </h2>
-                {profile.bio && (
-                  <p className="text-gray-600 text-lg mb-4">{profile.bio}</p>
-                )}
-                <div className="flex items-center space-x-4 text-sm text-gray-500">
-                  <span>{entries.length} shared entries</span>
-                  <Badge variant="outline" className="text-xs">
-                    <Globe className="w-3 h-3 mr-1" />
-                    Shared Profile
-                  </Badge>
-                </div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                {profile.name}
+              </h2>
+              {profile.bio && (
+                <p className="text-gray-600 text-lg mb-4">{profile.bio}</p>
+              )}
+              <div className="flex items-center space-x-4 text-sm text-gray-500">
+                <span>{entries.length} shared entries</span>
+                <Badge variant="outline" className="text-xs">
+                  <Globe className="w-3 h-3 mr-1" />
+                  Shared Profile
+                </Badge>
               </div>
             </CardContent>
           </Card>
