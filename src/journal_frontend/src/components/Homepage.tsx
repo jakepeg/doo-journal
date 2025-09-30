@@ -121,7 +121,14 @@ export default function Homepage() {
         {/* Profile Section */}
         <Card className="pt-0 mt-8 mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
           <div className="relative">
-            <div className="h-48 bg-gradient-to-r from-purple-400 to-blue-400 relative">
+            <div className="h-48 bg-gradient-to-r from-purple-400 to-blue-400 relative overflow-hidden">
+              {profile?.coverImage && profile.coverImage.length > 0 ? (
+                <img 
+                  src={profile.coverImage[0]} 
+                  alt="Cover image"
+                  className="w-full h-full object-cover"
+                />
+              ) : null}
               <div className="absolute inset-0 bg-black/20"></div>
               <Button
                 onClick={() => setShowProfileModal(true)}

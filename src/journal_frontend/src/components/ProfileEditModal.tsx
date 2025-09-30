@@ -6,7 +6,7 @@ import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { useGetCallerUserProfile, useSaveUserProfile } from '../hooks/useQueries';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Camera, Upload, X, User } from 'lucide-react';
+import { Camera, Upload, X, User, Image } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ProfileEditModalProps {
@@ -19,6 +19,8 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
   const [bio, setBio] = useState('');
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [profilePicturePreview, setProfilePicturePreview] = useState<string>('');
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverImagePreview, setCoverImagePreview] = useState<string>('');
   
   const { mutate: saveProfile, isPending: isSaving } = useSaveUserProfile();
 
@@ -32,6 +34,13 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
         const profilePicUrl = currentProfile.profilePicture[0];
         if (profilePicUrl) {
           setProfilePicturePreview(profilePicUrl);
+        }
+      }
+      // If there's an existing cover image, convert it to preview
+      if (currentProfile.coverImage && currentProfile.coverImage.length > 0) {
+        const coverImageUrl = currentProfile.coverImage[0];
+        if (coverImageUrl) {
+          setCoverImagePreview(coverImageUrl);
         }
       }
     }
@@ -68,6 +77,37 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
     setProfilePicturePreview('');
   };
 
+  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      
+      // Validate file size (max 10MB for cover images)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('Cover image must be smaller than 10MB');
+        return;
+      }
+
+      setCoverImage(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setCoverImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeCoverImage = () => {
+    setCoverImage(null);
+    setCoverImagePreview('');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -77,6 +117,7 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
     }
 
     let profilePictureData: [] | [string] = [];
+    let coverImageData: [] | [string] = [];
     
     // If there's a new profile picture file, convert it to base64
     if (profilePicture) {
@@ -98,11 +139,31 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
       profilePictureData = [profilePicturePreview];
     }
 
+    // If there's a new cover image file, convert it to base64
+    if (coverImage) {
+      try {
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+        });
+        reader.readAsDataURL(coverImage);
+        const base64String = await base64Promise;
+        coverImageData = [base64String];
+      } catch (error) {
+        toast.error('Failed to process cover image');
+        return;
+      }
+    } else if (coverImagePreview && !coverImage) {
+      // Keep existing cover image if no new one uploaded
+      coverImageData = [coverImagePreview];
+    }
+
     saveProfile({
       name: name.trim(),
       bio: bio.trim(),
       profilePicture: profilePictureData,
-      coverImage: [],
+      coverImage: coverImageData,
     }, {
       onSuccess: onClose,
     });
@@ -204,10 +265,62 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
             <p className="text-xs text-gray-500">{bio.length}/200 characters</p>
           </div>
 
-          {/* Cover image upload commented out */}
-          {/*
-          <div className="space-y-2"> ... cover upload block ... </div>
-          */}
+          {/* Cover Image Upload */}
+          <div className="space-y-4">
+            <Label className="text-sm font-semibold text-gray-700">
+              Cover Image 🖼️
+            </Label>
+            
+            {/* Cover Image Preview */}
+            <div className="relative w-full h-32 bg-gradient-to-r from-purple-100 to-blue-100 border-2 border-purple-200 rounded-lg overflow-hidden">
+              {coverImagePreview ? (
+                <>
+                  <img 
+                    src={coverImagePreview} 
+                    alt="Cover image preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={removeCoverImage}
+                    className="absolute top-2 right-2 rounded-full w-8 h-8 p-0 bg-red-100 hover:bg-red-200 border-red-300"
+                  >
+                    <X className="w-4 h-4 text-red-600" />
+                  </Button>
+                </>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-400">
+                  <div className="text-center">
+                    <Image className="w-8 h-8 mx-auto mb-2" />
+                    <p className="text-sm">No cover image</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Upload Button */}
+            <div className="flex items-center justify-center">
+              <input
+                type="file"
+                id="cover-image"
+                accept="image/*"
+                onChange={handleCoverImageUpload}
+                className="hidden"
+              />
+              <Label
+                htmlFor="cover-image"
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-100 to-blue-100 hover:from-purple-200 hover:to-blue-200 border border-purple-300 rounded-lg cursor-pointer transition-colors"
+              >
+                {coverImage ? <Camera className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
+                <span className="text-sm font-medium">
+                  {coverImage ? 'Change Cover' : 'Upload Cover'}
+                </span>
+              </Label>
+            </div>
+            <p className="text-xs text-gray-500 text-center">Max 10MB • JPG, PNG, GIF • Recommended: 800x200px</p>
+          </div>
 
           <div className="flex space-x-3 pt-4">
             <Button
