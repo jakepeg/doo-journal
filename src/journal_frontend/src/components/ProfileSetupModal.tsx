@@ -14,6 +14,9 @@ interface ProfileSetupModalProps {
 }
 
 export default function ProfileSetupModal({ onClose }: ProfileSetupModalProps) {
+  console.log('[ProfileSetupModal] Component rendered - this should only show for new users!');
+  console.log('[ProfileSetupModal] Stack trace:', new Error().stack);
+  
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [profilePicture, setProfilePicture] = useState<File | null>(null);

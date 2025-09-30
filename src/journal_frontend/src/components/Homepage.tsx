@@ -8,6 +8,7 @@ import { Badge } from './ui/badge';
 import { Plus, Lock, Globe, Edit, Trash2, Share2 } from 'lucide-react';
 import JournalEntryModal from './JournalEntryModal';
 import ProfileEditModal from './ProfileEditModal';
+import ProfileSetupModal from './ProfileSetupModal';
 import { useState, useEffect } from 'react';
 import type { JournalEntry } from '../../../declarations/journal_backend/journal_backend.did';
 import { toast } from 'sonner';
@@ -20,6 +21,7 @@ export default function Homepage() {
   const { data: homepage, isLoading, error } = useGetOwnHomepage();
   const [showEntryModal, setShowEntryModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showProfileSetupModal, setShowProfileSetupModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
   const { mutate: deleteEntry } = useDeleteJournalEntry();
 
@@ -43,10 +45,20 @@ export default function Homepage() {
       isLoading,
       hasHomepage: !!homepage,
       hasProfile: !!homepage?.profile,
+      profileData: homepage?.profile,
       entriesCount: homepage?.entries?.length || 0,
       error: error?.message,
       identity: identity?.getPrincipal().toString()
     });
+
+    // Check if user needs profile setup after homepage data is loaded
+    if (!isLoading && homepage && !homepage.profile) {
+      console.log('[Homepage] No profile found, showing ProfileSetupModal');
+      setShowProfileSetupModal(true);
+    } else if (!isLoading && homepage && homepage.profile) {
+      console.log('[Homepage] Profile exists, hiding ProfileSetupModal');
+      setShowProfileSetupModal(false);
+    }
   }, [homepage, isLoading, error, identity]);
 
   const handleEditEntry = (entry: JournalEntry) => {
@@ -335,6 +347,12 @@ export default function Homepage() {
       {showProfileModal && (
         <ProfileEditModal
           onClose={() => setShowProfileModal(false)}
+        />
+      )}
+
+      {showProfileSetupModal && (
+        <ProfileSetupModal
+          onClose={() => setShowProfileSetupModal(false)}
         />
       )}
     </div>

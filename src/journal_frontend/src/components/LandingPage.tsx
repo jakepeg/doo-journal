@@ -13,12 +13,25 @@ import { Link } from '@tanstack/react-router';
 
 export default function LandingPage() {
   const { identity, login, isLoggingIn, isInitializing } = useInternetIdentity();
-  const { data: userProfile, isLoading: profileLoading, isFetched: profileFetched } =
+  const { data: userProfile, isLoading: profileLoading, isFetched: profileFetched, isSuccess, isError } =
     useGetCallerUserProfile();
   const [viewingUser, setViewingUser] = useState<Principal | null>(null);
   const [appInitialized, setAppInitialized] = useState(false);
+  const [profileCheckComplete, setProfileCheckComplete] = useState(false);
 
   const isAuthenticated = !!identity && !identity.getPrincipal().isAnonymous();
+
+  // Add a delay to ensure all profile queries are settled before deciding on ProfileSetupModal
+  useEffect(() => {
+    if (isAuthenticated && !profileLoading && profileFetched) {
+      const timer = setTimeout(() => {
+        setProfileCheckComplete(true);
+      }, 300); // Small delay to ensure all queries are settled
+      return () => clearTimeout(timer);
+    } else {
+      setProfileCheckComplete(false);
+    }
+  }, [isAuthenticated, profileLoading, profileFetched]);
 
   // Handle ?user= param in URL
   useEffect(() => {
@@ -165,25 +178,18 @@ export default function LandingPage() {
   }
 
   // Authenticated → profile check
-  const needsProfileSetup = isAuthenticated && profileFetched && userProfile === null;
-  const showProfileLoading = isAuthenticated && profileLoading && !profileFetched;
-
-  if (showProfileLoading) {
+  // Wait for profile data to be fully loaded before making decisions
+  if (isAuthenticated && profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Setting up your profile...</p>
+          <p className="text-gray-600">Loading your profile...</p>
         </div>
       </div>
     );
   }
 
-  // Authenticated homepage
-  return (
-    <>
-      <Homepage />
-      {needsProfileSetup && <ProfileSetupModal onClose={() => {}} />}
-    </>
-  );
+  // Authenticated homepage - let Homepage handle ProfileSetupModal logic
+  return <Homepage />;
 }
