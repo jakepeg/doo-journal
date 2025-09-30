@@ -181,7 +181,6 @@ export default function Homepage() {
                   className="w-full h-full object-cover"
                 />
               ) : null}
-              <div className="absolute inset-0 bg-black/20"></div>
               <Button
                 onClick={() => setShowProfileModal(true)}
                 variant="outline"
