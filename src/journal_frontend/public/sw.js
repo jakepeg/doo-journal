@@ -1,12 +1,20 @@
-const CACHE_NAME = 'doo-journal-v1';
-const STATIC_CACHE = 'doo-journal-static-v1';
-const DYNAMIC_CACHE = 'doo-journal-dynamic-v1';
+const CACHE_NAME = 'doo-journal-v2';
+const STATIC_CACHE = 'doo-journal-static-v2';
+const DYNAMIC_CACHE = 'doo-journal-dynamic-v2';
 
 // Assets to cache immediately (remove non-existent icon references since icons are embedded in manifest)
+// Assets to cache immediately - now include the actual PNG icons
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
-  // Icons are embedded as base64 in manifest.json, so no separate files needed
+  '/icons/16.png',
+  '/icons/32.png',
+  '/icons/72.png',
+  '/icons/128.png',
+  '/icons/144.png',
+  '/icons/152.png',
+  '/icons/192.png',
+  '/icons/512.png',
 ];
 
 // Install event - cache static assets
@@ -86,7 +94,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Handle API requests to the backend
-  if (url.pathname.includes('api') || url.hostname.includes('ic0.app') || url.hostname.includes('localhost')) {
+  if (url.hostname === ('doo.kids') || url.pathname.includes('api') || url.hostname.includes('ic0.app') || url.hostname.includes('localhost')) {
     event.respondWith(
       fetch(request)
         .then((response) => {
@@ -211,8 +219,8 @@ self.addEventListener('push', (event) => {
   
   const options = {
     body: event.data ? event.data.text() : 'New update available!',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-72x72.png',
+    icon: '/icons/192x192.png',
+    badge: '/icons/72x72.png',
     vibrate: [200, 100, 200],
     data: {
       dateOfArrival: Date.now(),
@@ -222,18 +230,18 @@ self.addEventListener('push', (event) => {
       {
         action: 'explore',
         title: 'Open Journal',
-        icon: '/icons/icon-192x192.png'
+        icon: '/icons/192x192.png'
       },
       {
         action: 'close',
         title: 'Close',
-        icon: '/icons/icon-192x192.png'
+        icon: '/icons/192x192.png'
       }
     ]
   };
 
   event.waitUntil(
-    self.registration.showNotification('My Journal', options)
+    self.registration.showNotification('Doo Journal', options)
   );
 });
 
