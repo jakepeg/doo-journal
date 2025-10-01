@@ -17,7 +17,7 @@ export async function createActorWithConfig(
     agentOptions?.host ||
     import.meta.env.VITE_IC_HOST ||
     (import.meta.env.VITE_DFX_NETWORK === "ic"
-      ? "https://ic0.app"
+      ? "https://icp-api.io"
       : "http://127.0.0.1:4943");
 
   const agent = new HttpAgent({
