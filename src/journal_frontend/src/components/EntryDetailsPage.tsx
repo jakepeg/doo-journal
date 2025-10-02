@@ -1,4 +1,4 @@
-import { useGetJournalEntry, useGetPublicJournalEntryWithProfile } from '../hooks/useQueries';
+import { useGetJournalEntry, useGetPublicJournalEntryWithProfile, type DecryptedJournalEntry } from '../hooks/useQueries';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from './ui/button';
@@ -10,6 +10,7 @@ import { useState } from 'react';
 import JournalEntryModal from './JournalEntryModal';
 import { useDeleteJournalEntry } from '../hooks/useQueries';
 import { toast } from 'sonner';
+import type { JournalEntry } from '../../../declarations/journal_backend/journal_backend.did';
 
 interface EntryDetailPageProps {
   userId: string;
@@ -35,6 +36,43 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
   const isLoading = entryLoading || publicLoading;
   const finalEntry = entry || publicEntryData?.entry;
   const authorProfile = publicEntryData?.profile;
+
+  // Helper to get displayable content from either JournalEntry or DecryptedJournalEntry
+  const getDisplayContent = (entry: JournalEntry | DecryptedJournalEntry): string => {
+    if ('content' in entry && typeof entry.content === 'string') {
+      // DecryptedJournalEntry
+      return entry.content;
+    } else {
+      // JournalEntry with Blob content - convert to string for display
+      const content = entry.content;
+      if (content instanceof Uint8Array || Array.isArray(content)) {
+        return new TextDecoder().decode(new Uint8Array(content));
+      }
+      return String(content);
+    }
+  };
+
+  // Helper to convert any entry to DecryptedJournalEntry format for the modal
+  const getModalEntry = (entry: JournalEntry | DecryptedJournalEntry): DecryptedJournalEntry => {
+    if ('content' in entry && typeof entry.content === 'string') {
+      // Already DecryptedJournalEntry
+      return entry as DecryptedJournalEntry;
+    } else {
+      // Convert JournalEntry to DecryptedJournalEntry
+      const content = entry.content;
+      const stringContent = content instanceof Uint8Array || Array.isArray(content)
+        ? new TextDecoder().decode(new Uint8Array(content))
+        : String(content);
+      
+      return {
+        ...entry,
+        content: stringContent,
+        _originalContent: content instanceof Uint8Array || Array.isArray(content) 
+          ? content 
+          : undefined
+      };
+    }
+  };
 
   const handleEdit = () => setShowEditModal(true);
 
@@ -305,14 +343,14 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
           <CardContent className="prose prose-lg max-w-none">
             <div
               className="text-gray-700 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: renderContent(finalEntry.content) }}
+              dangerouslySetInnerHTML={{ __html: renderContent(getDisplayContent(finalEntry)) }}
             />
           </CardContent>
         </Card>
       </article>
 
       {showEditModal && isAuthenticated && (
-        <JournalEntryModal entry={finalEntry} onClose={() => setShowEditModal(false)} />
+        <JournalEntryModal entry={getModalEntry(finalEntry)} onClose={() => setShowEditModal(false)} />
       )}
     </main>
     </>

@@ -22,6 +22,11 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
   const { actor } = useActor();
   const navigate = useNavigate();
 
+  // Helper to convert content to string for display
+  const getContentString = (content: Uint8Array | number[]): string => {
+    return new TextDecoder().decode(new Uint8Array(content));
+  };
+
   const renderContent = (content: string) => {
     let html = content
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -259,9 +264,11 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
                       <div className="flex-1 min-w-0">
                         <div
                           className="text-gray-700 leading-relaxed line-clamp-3"
-                          dangerouslySetInnerHTML={{ __html: renderContent(entry.content) }}
+                          dangerouslySetInnerHTML={{ 
+                            __html: renderContent(getContentString(entry.content))
+                          }}
                         />
-                        {entry.content.length > 200 && (
+                        {getContentString(entry.content).length > 200 && (
                           <p className="text-purple-600 text-sm mt-2 font-medium">
                             Click to read more...
                           </p>

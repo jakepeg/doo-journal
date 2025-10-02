@@ -20,6 +20,33 @@ persistent actor Journal {
   transient var accessControlState = AccessControl.initState();
   transient var registry = Registry.new();
 
+  // Helper functions for content conversion
+  private func textToBlob(text : Text) : Blob {
+    Text.encodeUtf8(text);
+  };
+
+  private func _blobToText(blob : Blob) : Text {
+    switch (Text.decodeUtf8(blob)) {
+      case (?text) { text };
+      case null { "" };
+    };
+  };
+
+  // vetKeys integration (placeholder for now - will use actual vetKeys when available)
+  private func deriveUserKey(userPrincipal : Principal) : async Blob {
+    // TODO: Replace with actual vetKeys call when available
+    // await VetKeys.derivedKey([Principal.toBlob(userPrincipal)])
+
+    // Temporary: Generate deterministic key from principal
+    let principalText = Principal.toText(userPrincipal);
+    textToBlob("temp_key_" # principalText);
+  };
+
+  // Public function for frontend to get encryption key
+  public shared ({ caller }) func getUserEncryptionKey() : async Blob {
+    await deriveUserKey(caller);
+  };
+
   // Types
   public type TimeSlot = {
     #morning; // 9:00 AM
@@ -44,7 +71,8 @@ persistent actor Journal {
   public type JournalEntry = {
     id : Text;
     title : Text;
-    content : Text;
+    content : Blob; // Now stores encrypted content as Blob
+    contentType : Text; // "encrypted" | "plaintext"
     isPublic : Bool;
     timestamp : Int;
     date : Int;
@@ -94,7 +122,8 @@ persistent actor Journal {
   // ---- Journal entries ----
   public shared ({ caller }) func createJournalEntry(
     title : Text,
-    content : Text,
+    content : Blob,
+    contentType : Text,
     isPublic : Bool,
     date : Int,
     imagePath : ?Text,
@@ -110,6 +139,7 @@ persistent actor Journal {
       id = entryId;
       title;
       content;
+      contentType;
       isPublic;
       timestamp = Time.now();
       date;
@@ -129,7 +159,8 @@ persistent actor Journal {
   public shared ({ caller }) func updateJournalEntry(
     entryId : Text,
     title : Text,
-    content : Text,
+    content : Blob,
+    contentType : Text,
     isPublic : Bool,
     date : Int,
     imagePath : ?Text,
@@ -152,6 +183,7 @@ persistent actor Journal {
                 id = entryId;
                 title;
                 content;
+                contentType;
                 isPublic;
                 timestamp = Time.now();
                 date;

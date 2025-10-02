@@ -1,4 +1,4 @@
-import { useGetOwnHomepage, useDeleteJournalEntry, type DecryptedJournalEntry } from '../hooks/useQueries';
+import { useGetOwnHomepage, useDeleteJournalEntry } from '../hooks/useQueries';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from './ui/button';
@@ -10,6 +10,7 @@ import JournalEntryModal from './JournalEntryModal';
 import ProfileEditModal from './ProfileEditModal';
 import ProfileSetupModal from './ProfileSetupModal';
 import { useState, useEffect } from 'react';
+import type { JournalEntry } from '../../../declarations/journal_backend/journal_backend.did';
 import { toast } from 'sonner';
 
 export default function Homepage() {
@@ -21,7 +22,7 @@ export default function Homepage() {
   const [showEntryModal, setShowEntryModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showProfileSetupModal, setShowProfileSetupModal] = useState(false);
-  const [editingEntry, setEditingEntry] = useState<DecryptedJournalEntry | null>(null);
+  const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
   const { mutate: deleteEntry } = useDeleteJournalEntry();
 
   const renderContent = (content: string) => {
@@ -70,7 +71,7 @@ export default function Homepage() {
     }
   }, [homepage, isLoading, error, identity]);
 
-  const handleEditEntry = (entry: DecryptedJournalEntry) => {
+  const handleEditEntry = (entry: JournalEntry) => {
     setEditingEntry(entry);
     setShowEntryModal(true);
   };
@@ -81,7 +82,7 @@ export default function Homepage() {
     }
   };
 
-  const handleEntryClick = (entry: DecryptedJournalEntry) => {
+  const handleEntryClick = (entry: JournalEntry) => {
     if (!identity) return;
     const userId = identity.getPrincipal().toString();
     navigate({ to: '/entry/$userId/$entryId', params: { userId, entryId: entry.id } });

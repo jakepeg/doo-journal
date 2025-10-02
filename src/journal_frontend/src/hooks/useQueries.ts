@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
+import { useVetKeys } from './useVetKeys';
 import { UserProfile, JournalEntry } from '../../../declarations/journal_backend/journal_backend.did';
 import { Principal } from '@dfinity/principal';
 import { toast } from 'sonner';
@@ -71,20 +72,64 @@ export function useSaveUserProfile() {
 }
 
 //
-// Get own homepage
+// Decrypted journal entry type for frontend use
+//
+export type DecryptedJournalEntry = Omit<JournalEntry, 'content'> & {
+  content: string; // Decrypted content as string
+  _originalContent?: Uint8Array | number[]; // Keep original for debugging
+};
+
+//
+// Get own homepage with decryption
 //
 export function useGetOwnHomepage() {
   const { actor, isFetching: actorFetching } = useActor();
+  const { decryptContent } = useVetKeys();
 
-  return useQuery<{ profile?: UserProfile; entries: JournalEntry[] }>({
+  return useQuery<{ profile?: UserProfile; entries: DecryptedJournalEntry[] }>({
     queryKey: ['ownHomepage'],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
 
       const result = await actor.getOwnHomepage();
+      
+      // Decrypt private entries
+      const decryptedEntries: DecryptedJournalEntry[] = await Promise.all(
+        result.entries.map(async (entry): Promise<DecryptedJournalEntry> => {
+          if (entry.contentType === 'encrypted') {
+            try {
+              const encryptedData = entry.content instanceof Uint8Array 
+                ? entry.content 
+                : new Uint8Array(entry.content);
+              const decryptedContent = await decryptContent(encryptedData);
+              return {
+                ...entry,
+                content: decryptedContent,
+                _originalContent: entry.content,
+              };
+            } catch (error) {
+              console.error('Failed to decrypt entry:', error);
+              return {
+                ...entry,
+                content: '[Decryption failed]',
+              };
+            }
+          } else {
+            // Plaintext content
+            const content = entry.content instanceof Uint8Array
+              ? new TextDecoder().decode(entry.content)
+              : new TextDecoder().decode(new Uint8Array(entry.content));
+            return {
+              ...entry,
+              content,
+            };
+          }
+        })
+      );
+
       return {
         profile: unwrapOpt(result.profile) || undefined,
-        entries: result.entries,
+        entries: decryptedEntries,
       };
     },
     enabled: !!actor && !actorFetching,
@@ -117,18 +162,51 @@ export function useGetUserHomepage(user: Principal) {
 }
 
 //
-// Get single journal entry
+// Get single journal entry with decryption
 //
 export function useGetJournalEntry(user: Principal, entryId: string) {
   const { actor, isFetching: actorFetching } = useActor();
+  const { decryptContent } = useVetKeys();
 
-  return useQuery<JournalEntry | null>({
+  return useQuery<DecryptedJournalEntry | null>({
     queryKey: ['journalEntry', user.toString(), entryId],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
 
       const result = await actor.getJournalEntryById(user, entryId);
-      return unwrapOpt(result);
+      const entry = unwrapOpt(result);
+      
+      if (!entry) return null;
+
+      // Decrypt if encrypted and it's the user's own entry
+      if (entry.contentType === 'encrypted') {
+        try {
+          const encryptedData = entry.content instanceof Uint8Array 
+            ? entry.content 
+            : new Uint8Array(entry.content);
+          const decryptedContent = await decryptContent(encryptedData);
+          return {
+            ...entry,
+            content: decryptedContent,
+            _originalContent: entry.content,
+          } as DecryptedJournalEntry;
+        } catch (error) {
+          console.error('Failed to decrypt entry:', error);
+          return {
+            ...entry,
+            content: '[Decryption failed]',
+          } as DecryptedJournalEntry;
+        }
+      } else {
+        // Plaintext content
+        const content = entry.content instanceof Uint8Array
+          ? new TextDecoder().decode(entry.content)
+          : new TextDecoder().decode(new Uint8Array(entry.content));
+        return {
+          ...entry,
+          content,
+        } as DecryptedJournalEntry;
+      }
     },
     enabled: !!actor && !!user && !!entryId,
     staleTime: 5 * 60 * 1000,
@@ -164,10 +242,11 @@ export function useGetPublicJournalEntryWithProfile(
 
 
 //
-// Create entry
+// Create entry with encryption support
 //
 export function useCreateJournalEntry() {
   const { actor } = useActor();
+  const { encryptContent } = useVetKeys();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -185,13 +264,56 @@ export function useCreateJournalEntry() {
       imagePath: string | null;
     }) => {
       if (!actor) throw new Error('Actor not available');
-      return await actor.createJournalEntry(
+
+      let processedContent: Uint8Array;
+      let contentType: string;
+
+      if (isPublic) {
+        // Public entries remain unencrypted
+        processedContent = new TextEncoder().encode(content);
+        contentType = 'plaintext';
+      } else {
+        // Private entries are encrypted
+        processedContent = await encryptContent(content);
+        contentType = 'encrypted';
+      }
+
+      console.log('[DEBUG] Creating entry:', {
         title,
-        content,
+        contentLength: processedContent.length,
+        contentType,
+        isPublic,
+        contentPreview: processedContent.slice(0, 20),
+        processedContentType: processedContent.constructor.name,
+        isUint8Array: processedContent instanceof Uint8Array
+      });
+
+      // Try different approaches for blob serialization
+      console.log('[DEBUG] Original processedContent:', processedContent);
+      
+      // Approach 1: Array.from
+      const blobData = Array.from(processedContent);
+      console.log('[DEBUG] Blob data as array:', {
+        length: blobData.length,
+        first10: blobData.slice(0, 10),
+        isArray: Array.isArray(blobData),
+        allNumbers: blobData.every(x => typeof x === 'number' && x >= 0 && x <= 255)
+      });
+
+      // Approach 2: Try direct Uint8Array (fallback)
+      // const blobData = processedContent;
+
+      const result = await actor.createJournalEntry(
+        title,
+        blobData, // Send as number array for Candid serialization
+        contentType,
         isPublic,
         date,
         imagePath ? [imagePath] : [] // convert to opt text
       );
+      
+      console.log('[DEBUG] Backend response:', result);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ownHomepage'] });
@@ -205,10 +327,11 @@ export function useCreateJournalEntry() {
 }
 
 //
-// Update entry
+// Update entry with encryption support
 //
 export function useUpdateJournalEntry() {
   const { actor } = useActor();
+  const { encryptContent } = useVetKeys();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -228,10 +351,37 @@ export function useUpdateJournalEntry() {
       imagePath: string | null;
     }) => {
       if (!actor) throw new Error('Actor not available');
+
+      let processedContent: Uint8Array;
+      let contentType: string;
+
+      if (isPublic) {
+        // Public entries remain unencrypted
+        processedContent = new TextEncoder().encode(content);
+        contentType = 'plaintext';
+      } else {
+        // Private entries are encrypted
+        processedContent = await encryptContent(content);
+        contentType = 'encrypted';
+      }
+
+      console.log('[DEBUG] Updating entry:', {
+        entryId,
+        title,
+        contentLength: processedContent.length,
+        contentType,
+        isPublic,
+        contentPreview: processedContent.slice(0, 20)
+      });
+
+      // Convert to proper format for Candid
+      const blobData = Array.from(processedContent);
+      
       return await actor.updateJournalEntry(
         entryId,
         title,
-        content,
+        blobData, // Send as number array for Candid serialization
+        contentType,
         isPublic,
         date,
         imagePath ? [imagePath] : [] // convert to opt text

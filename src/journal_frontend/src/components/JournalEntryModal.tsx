@@ -6,9 +6,8 @@ import { Label } from './ui/label';
 import { Switch } from './ui/switch';
 import { Calendar } from './ui/calendar-basic';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { useCreateJournalEntry, useUpdateJournalEntry } from '../hooks/useQueries';
+import { useCreateJournalEntry, useUpdateJournalEntry, type DecryptedJournalEntry } from '../hooks/useQueries';
 // import { useFileUpload } from '../blob-storage/FileStorage';
-import type { JournalEntry } from '../../../declarations/journal_backend/journal_backend.did';
 import RichTextEditor from './RichTextEditor-new';
 import EmojiPicker from './EmojiPicker';
 import { BookOpen, Globe, Lock, Calendar as CalendarIcon, Smile, Image as ImageIcon } from 'lucide-react';
@@ -16,7 +15,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 
 interface JournalEntryModalProps {
-  entry?: JournalEntry | null;
+  entry?: DecryptedJournalEntry | null;
   onClose: () => void;
 }
 
