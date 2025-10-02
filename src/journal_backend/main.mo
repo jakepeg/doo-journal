@@ -6,6 +6,10 @@ import Debug "mo:base/Debug";
 import Time "mo:base/Time";
 import Text "mo:base/Text";
 import Array "mo:base/Array";
+import Timer "mo:base/Timer";
+import HashMap "mo:base/HashMap";
+import Int "mo:base/Int";
+import Nat8 "mo:base/Nat8";
 
 persistent actor Journal {
   // Principal-OrderedMap specialization
@@ -17,11 +21,23 @@ persistent actor Journal {
   transient var registry = Registry.new();
 
   // Types
+  public type TimeSlot = {
+    #morning; // 9:00 AM
+    #afternoon; // 6:00 PM
+  };
+
+  public type WeeklyReminderSettings = {
+    enabled : Bool;
+    dayOfWeek : Nat8; // 0=Sunday, 1=Monday, etc.
+    timeSlot : TimeSlot;
+  };
+
   public type UserProfile = {
     name : Text;
     bio : Text;
     profilePicture : ?Text;
     coverImage : ?Text;
+    weeklyReminderSettings : ?WeeklyReminderSettings;
   };
 
   public type JournalEntry = {
@@ -37,6 +53,10 @@ persistent actor Journal {
   // Stable state
   var userProfiles : PrincipalMap<UserProfile> = PrincipalMapOps.empty<UserProfile>();
   var journalEntries : PrincipalMap<[JournalEntry]> = PrincipalMapOps.empty<[JournalEntry]>();
+
+  // Activity tracking (transient state)
+  transient var activeUsers = HashMap.HashMap<Principal, Int>(16, Principal.equal, Principal.hash);
+  transient var notificationTimers : ?Timer.TimerId = null;
 
   // ---- Access control ----
   public shared ({ caller }) func initializeAccessControl() : async () {
@@ -281,5 +301,127 @@ persistent actor Journal {
       };
       case _ { null };
     };
+  };
+
+  // ---- Activity Tracking & Notifications ----
+
+  // Update user activity timestamp
+  public shared ({ caller }) func updateUserActivity() : async () {
+    activeUsers.put(caller, Time.now());
+  };
+
+  // Check if user is currently active (within 5 minutes)
+  private func isUserActive(principal : Principal) : Bool {
+    switch (activeUsers.get(principal)) {
+      case (?lastSeen) {
+        let now = Time.now();
+        let fiveMinutesInNanoseconds : Int = 5 * 60 * 1000 * 1000 * 1000; // 5 minutes in nanoseconds
+        (now - lastSeen) < fiveMinutesInNanoseconds;
+      };
+      case null { false };
+    };
+  };
+
+  // Get current day of week (0=Sunday, 1=Monday, etc.)
+  private func getCurrentDayOfWeek() : Nat8 {
+    let now = Time.now();
+    let secondsSinceEpoch = now / 1000000000; // Convert nanoseconds to seconds
+    let daysSinceEpoch = secondsSinceEpoch / 86400; // 86400 seconds in a day
+    let dayOfWeek = (daysSinceEpoch + 4) % 7; // Epoch was Thursday (4), so adjust
+    let dayOfWeekNat = Int.abs(dayOfWeek);
+    if (dayOfWeekNat < 256) {
+      Nat8.fromNat(dayOfWeekNat);
+    } else { 0 };
+  };
+
+  // Get current hour (0-23)
+  private func getCurrentHour() : Nat8 {
+    let now = Time.now();
+    let secondsSinceEpoch = now / 1000000000;
+    let secondsInDay = secondsSinceEpoch % 86400;
+    let currentHour = secondsInDay / 3600;
+    let hourNat = Int.abs(currentHour);
+    if (hourNat < 256) {
+      Nat8.fromNat(hourNat);
+    } else { 0 };
+  };
+
+  // Check if it's time for reminders based on time slot
+  private func isReminderTime(timeSlot : TimeSlot) : Bool {
+    let currentHour = getCurrentHour();
+    switch (timeSlot) {
+      case (#morning) { currentHour == 9 }; // 9 AM
+      case (#afternoon) { currentHour == 18 }; // 6 PM
+    };
+  };
+
+  // Process reminders for active users
+  private func processActiveUserReminders() : async () {
+    let currentDay = getCurrentDayOfWeek();
+
+    for ((principal, profile) in PrincipalMapOps.entries(userProfiles)) {
+      switch (profile.weeklyReminderSettings) {
+        case (?settings) {
+          if (
+            settings.enabled and
+            settings.dayOfWeek == currentDay and
+            isReminderTime(settings.timeSlot) and
+            isUserActive(principal)
+          ) {
+
+            // Send notification to active user
+            // For now, we'll just log it - frontend will poll for notifications
+            Debug.print("Notification due for user: " # Principal.toText(principal));
+          };
+        };
+        case null {};
+      };
+    };
+  };
+
+  // Check if user has pending notification
+  public shared query ({ caller }) func checkPendingNotification() : async Bool {
+    switch (PrincipalMapOps.get(userProfiles, caller)) {
+      case (?profile) {
+        switch (profile.weeklyReminderSettings) {
+          case (?settings) {
+            if (
+              settings.enabled and
+              settings.dayOfWeek == getCurrentDayOfWeek() and
+              isReminderTime(settings.timeSlot)
+            ) {
+              true;
+            } else { false };
+          };
+          case null { false };
+        };
+      };
+      case null { false };
+    };
+  };
+
+  // Initialize timers (called after deployment)
+  public func initializeNotificationTimers() : async () {
+    // Set up recurring timer to check every hour
+    notificationTimers := ?Timer.recurringTimer<system>(
+      #seconds(3600), // Check every hour
+      func() : async () { await processActiveUserReminders() },
+    );
+  };
+
+  // System functions for canister lifecycle
+  system func preupgrade() {
+    switch (notificationTimers) {
+      case (?timerId) { Timer.cancelTimer(timerId) };
+      case null {};
+    };
+  };
+
+  system func postupgrade() {
+    // Recreate timers after upgrade
+    ignore Timer.setTimer<system>(
+      #seconds(1),
+      func() : async () { await initializeNotificationTimers() },
+    );
   };
 };

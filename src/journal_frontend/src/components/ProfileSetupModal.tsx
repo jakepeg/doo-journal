@@ -139,6 +139,7 @@ export default function ProfileSetupModal({ onClose }: ProfileSetupModalProps) {
         bio: bio.trim(),
         profilePicture: profilePictureData,
         coverImage: coverImageData,
+        weeklyReminderSettings: [], // Default to no reminder settings in setup
       },
       {
         onSuccess: onClose,

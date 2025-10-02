@@ -247,10 +247,25 @@ self.addEventListener('push', (event) => {
 
 // Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
-  console.log('Service Worker: Notification clicked');
+  console.log('Service Worker: Notification clicked', event);
   
   event.notification.close();
   
+  // Handle weekly reminder notifications
+  if (event.notification.tag === 'weekly-reminder') {
+    if (event.action === 'open' || !event.action) {
+      // Open the add-entry page
+      event.waitUntil(
+        clients.openWindow('/add-entry')
+      );
+    } else if (event.action === 'dismiss') {
+      // Just close the notification (already handled above)
+      console.log('User dismissed reminder');
+    }
+    return;
+  }
+  
+  // Handle other notifications
   if (event.action === 'explore') {
     event.waitUntil(
       clients.openWindow('/')

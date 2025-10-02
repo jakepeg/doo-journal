@@ -8,6 +8,7 @@ import { useGetCallerUserProfile, useSaveUserProfile } from '../hooks/useQueries
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Camera, Upload, X, User, Image } from 'lucide-react';
 import { toast } from 'sonner';
+import CollapsibleReminderSection from './CollapsibleReminderSection';
 
 interface ProfileEditModalProps {
   onClose: () => void;
@@ -21,6 +22,7 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
   const [profilePicturePreview, setProfilePicturePreview] = useState<string>('');
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState<string>('');
+  const [weeklyReminderSettings, setWeeklyReminderSettings] = useState<any>(undefined);
   
   const { mutate: saveProfile, isPending: isSaving } = useSaveUserProfile();
 
@@ -28,6 +30,15 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
     if (currentProfile) {
       setName(currentProfile.name);
       setBio(currentProfile.bio);
+      
+      // Set weekly reminder settings - always reset to current profile state
+      if (currentProfile.weeklyReminderSettings && currentProfile.weeklyReminderSettings.length > 0) {
+        setWeeklyReminderSettings(currentProfile.weeklyReminderSettings[0]);
+      } else {
+        // Reset to undefined if no settings in profile
+        setWeeklyReminderSettings(undefined);
+      }
+      
       // If there's an existing profile picture, convert it to preview
       if (currentProfile.profilePicture && currentProfile.profilePicture.length > 0) {
         // Extract the string from the optional array
@@ -159,11 +170,17 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
       coverImageData = [coverImagePreview];
     }
 
+    // Properly handle the weeklyReminderSettings type - must be [] or [WeeklyReminderSettings]
+    const finalSettings: [] | [any] = weeklyReminderSettings && weeklyReminderSettings.enabled 
+      ? [weeklyReminderSettings] 
+      : [];
+    
     saveProfile({
       name: name.trim(),
       bio: bio.trim(),
       profilePicture: profilePictureData,
       coverImage: coverImageData,
+      weeklyReminderSettings: finalSettings,
     }, {
       onSuccess: onClose,
     });
@@ -221,10 +238,6 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
 
           {/* Cover Image Upload */}
           <div className="space-y-4">
-            <Label className="text-sm font-semibold text-gray-700">
-              Cover Image 🖼️
-            </Label>
-            
             {/* Cover Image Preview */}
             <div className="relative w-full h-32 bg-gradient-to-r from-purple-100 to-blue-100 border-2 border-purple-200 rounded-lg overflow-hidden">
               {coverImagePreview ? (
@@ -319,6 +332,12 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
             />
             <p className="text-xs text-gray-500">{bio.length}/200 characters</p>
           </div>
+
+          {/* Collapsible Weekly Reminder Settings */}
+          <CollapsibleReminderSection
+            settings={weeklyReminderSettings}
+            onChange={setWeeklyReminderSettings}
+          />
 
           <div className="flex space-x-3 pt-4">
             <Button

@@ -5,6 +5,8 @@ import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { routeTree } from './routeTree.gen';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import OfflineIndicator from './components/OfflineIndicator';
+import { useActivityTracker } from './hooks/useActivityTracker';
+import { useNotificationChecker } from './hooks/useNotificationChecker';
 import { useEffect } from 'react';
 
 // Create a new router instance
@@ -22,6 +24,10 @@ declare module '@tanstack/react-router' {
 
 function App() {
   console.log('[DEBUG] App: Component mounting');
+  
+  // Initialize activity tracking and notifications
+  useActivityTracker();
+  useNotificationChecker();
   
   // Add router context debug logging
   useEffect(() => {
