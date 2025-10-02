@@ -9,12 +9,11 @@ import { Plus, Lock, Globe, Edit, Trash2, Share2 } from 'lucide-react';
 import JournalEntryModal from './JournalEntryModal';
 import ProfileEditModal from './ProfileEditModal';
 import ProfileSetupModal from './ProfileSetupModal';
+import EncryptionDebugPanel from './EncryptionDebugPanel';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 export default function Homepage() {
-  console.log('[DEBUG] Homepage: Component mounting');
-  
   const navigate = useNavigate();
   const { identity } = useInternetIdentity();
   const { data: homepage, isLoading, error } = useGetOwnHomepage();
@@ -50,22 +49,10 @@ export default function Homepage() {
 };
 
   useEffect(() => {
-    console.log('[DEBUG] Homepage: State changed', {
-      isLoading,
-      hasHomepage: !!homepage,
-      hasProfile: !!homepage?.profile,
-      profileData: homepage?.profile,
-      entriesCount: homepage?.entries?.length || 0,
-      error: error?.message,
-      identity: identity?.getPrincipal().toString()
-    });
-
     // Check if user needs profile setup after homepage data is loaded
     if (!isLoading && homepage && !homepage.profile) {
-      console.log('[Homepage] No profile found, showing ProfileSetupModal');
       setShowProfileSetupModal(true);
     } else if (!isLoading && homepage && homepage.profile) {
-      console.log('[Homepage] Profile exists, hiding ProfileSetupModal');
       setShowProfileSetupModal(false);
     }
   }, [homepage, isLoading, error, identity]);
@@ -259,10 +246,11 @@ export default function Homepage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-6 mb-8">
-            {entries
-              .sort((a, b) => Number(b.date) - Number(a.date))
-              .map((entry) => (
+          <>
+            <div className="space-y-6 mb-8">
+              {entries
+                .sort((a, b) => Number(b.date) - Number(a.date))
+                .map((entry) => (
                 <Card 
                   key={entry.id}
                   className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all cursor-pointer group gap-0"
@@ -288,6 +276,12 @@ export default function Homepage() {
                               <>
                                 <Lock className="w-3 h-3 mr-1" />
                                 Private
+                                {entry.content === '[Decryption failed]' && (
+                                  <span className="ml-1 text-red-500" title="Decryption failed">⚠️</span>
+                                )}
+                                {entry.content !== '[Decryption failed]' && entry._originalContent && (
+                                  <span className="ml-1 text-green-500" title="Successfully decrypted">🔓</span>
+                                )}
                               </>
                             )}
                           </Badge>
@@ -337,7 +331,11 @@ export default function Homepage() {
 
                 </Card>
               ))}
-          </div>
+            </div>
+            
+            {/* Add debug panel in development */}
+            {import.meta.env.DEV && <EncryptionDebugPanel />}
+          </>
         )}
       </div>
 

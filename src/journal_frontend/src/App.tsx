@@ -23,18 +23,13 @@ declare module '@tanstack/react-router' {
 }
 
 function App() {
-  console.log('[DEBUG] App: Component mounting');
-  
   // Initialize activity tracking and notifications
   useActivityTracker();
   useNotificationChecker();
   
-  // Add router context debug logging
+  // Router initialization
   useEffect(() => {
-    console.log('[DEBUG] App: Router instance created', {
-      routerExists: !!router,
-      routeTree: !!routeTree
-    });
+    // Router initialization complete
   }, []);
   
   return (

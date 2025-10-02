@@ -4,6 +4,7 @@ import { useVetKeys } from './useVetKeys';
 import { UserProfile, JournalEntry } from '../../../declarations/journal_backend/journal_backend.did';
 import { Principal } from '@dfinity/principal';
 import { toast } from 'sonner';
+import { debug } from '../utils/debug';
 
 //
 // Utility: unwrap Candid opt types ([] | [T]) → T | null/undefined
@@ -94,21 +95,43 @@ export function useGetOwnHomepage() {
       const result = await actor.getOwnHomepage();
       
       // Decrypt private entries
+      debug.log(`Processing ${result.entries.length} entries from backend`);
+      
       const decryptedEntries: DecryptedJournalEntry[] = await Promise.all(
-        result.entries.map(async (entry): Promise<DecryptedJournalEntry> => {
+        result.entries.map(async (entry, index): Promise<DecryptedJournalEntry> => {
+          debug.log(`Entry ${index + 1}:`, {
+            id: entry.id,
+            title: entry.title,
+            contentType: entry.contentType,
+            isPublic: entry.isPublic,
+            contentLength: entry.content?.length || 0
+          });
+
           if (entry.contentType === 'encrypted') {
             try {
               const encryptedData = entry.content instanceof Uint8Array 
                 ? entry.content 
                 : new Uint8Array(entry.content);
+              
+              debug.log(`Decrypting entry ${index + 1} (${entry.title}):`, {
+                encryptedLength: encryptedData.length,
+                firstBytes: Array.from(encryptedData.slice(0, 10))
+              });
+              
               const decryptedContent = await decryptContent(encryptedData);
+              
+              debug.log(`Successfully decrypted entry ${index + 1}:`, {
+                decryptedLength: decryptedContent.length,
+                preview: decryptedContent.substring(0, 50) + '...'
+              });
+              
               return {
                 ...entry,
                 content: decryptedContent,
                 _originalContent: entry.content,
               };
             } catch (error) {
-              console.error('Failed to decrypt entry:', error);
+              debug.error(`Failed to decrypt entry ${index + 1} (${entry.title}):`, error);
               return {
                 ...entry,
                 content: '[Decryption failed]',
@@ -272,33 +295,31 @@ export function useCreateJournalEntry() {
         // Public entries remain unencrypted
         processedContent = new TextEncoder().encode(content);
         contentType = 'plaintext';
+        debug.log('Creating public entry:', {
+          title,
+          contentLength: content.length,
+          processedLength: processedContent.length
+        });
       } else {
         // Private entries are encrypted
+        debug.log('Encrypting private entry:', {
+          title,
+          originalContent: content.substring(0, 50) + '...',
+          originalLength: content.length
+        });
+        
         processedContent = await encryptContent(content);
         contentType = 'encrypted';
+        
+        debug.log('Entry encrypted:', {
+          title,
+          encryptedLength: processedContent.length,
+          firstEncryptedBytes: Array.from(processedContent.slice(0, 10))
+        });
       }
 
-      console.log('[DEBUG] Creating entry:', {
-        title,
-        contentLength: processedContent.length,
-        contentType,
-        isPublic,
-        contentPreview: processedContent.slice(0, 20),
-        processedContentType: processedContent.constructor.name,
-        isUint8Array: processedContent instanceof Uint8Array
-      });
-
-      // Try different approaches for blob serialization
-      console.log('[DEBUG] Original processedContent:', processedContent);
-      
-      // Approach 1: Array.from
+      // Convert Uint8Array to number array for IDL serialization
       const blobData = Array.from(processedContent);
-      console.log('[DEBUG] Blob data as array:', {
-        length: blobData.length,
-        first10: blobData.slice(0, 10),
-        isArray: Array.isArray(blobData),
-        allNumbers: blobData.every(x => typeof x === 'number' && x >= 0 && x <= 255)
-      });
 
       // Approach 2: Try direct Uint8Array (fallback)
       // const blobData = processedContent;
@@ -312,7 +333,7 @@ export function useCreateJournalEntry() {
         imagePath ? [imagePath] : [] // convert to opt text
       );
       
-      console.log('[DEBUG] Backend response:', result);
+      // Entry created successfully
       return result;
     },
     onSuccess: () => {

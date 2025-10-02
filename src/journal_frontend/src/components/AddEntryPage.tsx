@@ -19,8 +19,6 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 
 export default function AddEntryPage() {
-  console.log('[DEBUG] AddEntryPage: Component mounting');
-  
   const navigate = useNavigate();
   const { identity, loginStatus } = useInternetIdentity();
   const [title, setTitle] = useState('');
@@ -132,12 +130,6 @@ export default function AddEntryPage() {
   }, []);
 
   const handleContentChange = useCallback((newContent: string) => {
-    console.log('[DEBUG] AddEntryPage: Content changed', { 
-      length: newContent.length, 
-      hasIdentity: !!identity,
-      loginStatus,
-      isAuthenticatedRef: isAuthenticatedRef.current
-    });
     setContent(newContent);
   }, [identity, loginStatus]);
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
@@ -14,9 +14,6 @@ interface ProfileSetupModalProps {
 }
 
 export default function ProfileSetupModal({ onClose }: ProfileSetupModalProps) {
-  console.log('[ProfileSetupModal] Component rendered - this should only show for new users!');
-  console.log('[ProfileSetupModal] Stack trace:', new Error().stack);
-  
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
@@ -163,6 +160,9 @@ export default function ProfileSetupModal({ onClose }: ProfileSetupModalProps) {
             Create Your Profile
             <Sparkles className="w-6 h-6 text-blue-500" />
           </DialogTitle>
+          <DialogDescription className="text-center text-gray-600">
+            Set up your profile to get started with your journal
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
