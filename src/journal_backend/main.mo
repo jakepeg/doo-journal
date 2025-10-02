@@ -30,6 +30,7 @@ persistent actor Journal {
     enabled : Bool;
     dayOfWeek : Nat8; // 0=Sunday, 1=Monday, etc.
     timeSlot : TimeSlot;
+    timezone : ?Text; // Optional: "America/New_York", "Europe/London", etc. (null for backward compatibility)
   };
 
   public type UserProfile = {

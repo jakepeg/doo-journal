@@ -25,6 +25,9 @@ const TIME_SLOTS = [
 ];
 
 export default function CollapsibleReminderSection({ settings, onChange }: CollapsibleReminderSectionProps) {
+  // Detect user's timezone automatically
+  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  
   // Initialize state from props - will update when props change
   const [enabled, setEnabled] = useState(() => settings?.enabled ?? false);
   const [dayOfWeek, setDayOfWeek] = useState(() => settings?.dayOfWeek ?? 1);
@@ -59,7 +62,8 @@ export default function CollapsibleReminderSection({ settings, onChange }: Colla
       const newSettings = {
         enabled: true,
         dayOfWeek,
-        timeSlot: { [timeSlot]: null }
+        timeSlot: { [timeSlot]: null },
+        timezone: userTimezone ? [userTimezone] : [] // Convert to optional array format
       };
       onChange(newSettings);
     } else {
@@ -73,7 +77,8 @@ export default function CollapsibleReminderSection({ settings, onChange }: Colla
       const newSettings = {
         enabled: true,
         dayOfWeek: day,
-        timeSlot: { [timeSlot]: null }
+        timeSlot: { [timeSlot]: null },
+        timezone: userTimezone ? [userTimezone] : [] // Convert to optional array format
       };
       onChange(newSettings);
     }
@@ -85,7 +90,8 @@ export default function CollapsibleReminderSection({ settings, onChange }: Colla
       const newSettings = {
         enabled: true,
         dayOfWeek,
-        timeSlot: { [newTimeSlot]: null }
+        timeSlot: { [newTimeSlot]: null },
+        timezone: userTimezone ? [userTimezone] : [] // Convert to optional array format
       };
       onChange(newSettings);
     }
