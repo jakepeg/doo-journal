@@ -14,7 +14,7 @@ export default defineConfig({
   optimizeDeps: {
     include: [
       "@dfinity/agent",
-      "@dfinity/principal",
+      "@dfinity/principal", 
       "@dfinity/candid",
       "@dfinity/auth-client",
       "@dfinity/identity",
@@ -34,7 +34,11 @@ export default defineConfig({
       }
     },
     host: '127.0.0.1',
-    port: 3000
+    port: 3000,
+    hmr: {
+      port: 3001,
+      host: '127.0.0.1'
+    }
   },
   plugins: [
     react(),

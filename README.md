@@ -12,20 +12,39 @@ This repo contains both the Motoko backend canister and the React + Vite fronten
 - dfx ≥ 0.29.1
 - Internet Identity URL: `https://id.ai/#authorize`
 
-## Local (dev server)
+## 🚀 Quick Start
 
-dfx start --background --clean
-dfx deploy
-cd src/journal_frontend
-npm run start
+### Local Development
 
-## Local (prod-like)
+```bash
+# Start dfx and deploy all canisters
+dfx start --clean
+npm run deploy
+npm run dev
+```
 
-dfx start --background --clean
-cd src/journal_frontend && npm run build && cd ../..
-dfx deploy
+### Mainnet Deployment
 
-## Mainnet
+```bash
+# Automated production deployment
+npm run deploy:ic
+```
 
-cd src/journal_frontend && npm run build && cd ../..
-dfx deploy --network ic
+## 🔧 Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run deploy` - Deploy to local network (auto-configures vetKD keys)
+- `npm run deploy:ic` - Deploy to mainnet (auto-configures production environment)
+- `npm run update-env` - Regenerate .env.local with current canister IDs
+- `npm run build` - Build all workspaces
+
+## 🔐 Encryption System
+
+This app uses Internet Computer's vetKD (Verifiable Encryption with Threshold Key Derivation) for secure, deterministic encryption of journal entries. The system automatically:
+
+- Uses `dfx_test_key` for local development
+- Switches to `key_1` for mainnet deployment
+- Provides deterministic encryption based on user Principal IDs
+- No localStorage dependencies for cross-device consistency
+
+## 📁 Project Structure

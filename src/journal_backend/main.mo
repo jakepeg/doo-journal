@@ -10,6 +10,7 @@ import Timer "mo:base/Timer";
 import HashMap "mo:base/HashMap";
 import Int "mo:base/Int";
 import Nat8 "mo:base/Nat8";
+import Blob "mo:base/Blob";
 
 persistent actor Journal {
   // Principal-OrderedMap specialization
@@ -21,10 +22,6 @@ persistent actor Journal {
   transient var registry = Registry.new();
 
   // Helper functions for content conversion
-  private func textToBlob(text : Text) : Blob {
-    Text.encodeUtf8(text);
-  };
-
   private func _blobToText(blob : Blob) : Text {
     switch (Text.decodeUtf8(blob)) {
       case (?text) { text };
@@ -32,19 +29,113 @@ persistent actor Journal {
     };
   };
 
-  // vetKeys integration (placeholder for now - will use actual vetKeys when available)
-  private func deriveUserKey(userPrincipal : Principal) : async Blob {
-    // TODO: Replace with actual vetKeys call when available
-    // await VetKeys.derivedKey([Principal.toBlob(userPrincipal)])
+  // vetKD Management Canister Types
+  type VetKdCurve = { #bls12_381_g2 };
 
-    // Temporary: Generate deterministic key from principal
-    let principalText = Principal.toText(userPrincipal);
-    textToBlob("temp_key_" # principalText);
+  type VetKdKeyId = {
+    curve : VetKdCurve;
+    name : Text;
   };
 
-  // Public function for frontend to get encryption key
+  type VetKdDeriveKeyArgs = {
+    context : Blob;
+    input : Blob;
+    key_id : VetKdKeyId;
+    transport_public_key : Blob;
+  };
+
+  type VetKdPublicKeyArgs = {
+    canister_id : ?Principal;
+    context : Blob;
+    key_id : VetKdKeyId;
+  };
+
+  type VetKdSystemApi = actor {
+    vetkd_derive_key : (VetKdDeriveKeyArgs) -> async { encrypted_key : Blob };
+    vetkd_public_key : (VetKdPublicKeyArgs) -> async { public_key : Blob };
+  };
+
+  // vetKD Infrastructure - Now Enabled!
+
+  // Management canister actor for vetKD
+  let vetKdSystemApi : VetKdSystemApi = actor ("aaaaa-aa");
+
+  // Domain separator for this dapp - used to isolate keys per application
+  let DOMAIN_SEPARATOR = "doo-journal-app";
+
+  // Key name for this specific application - set by environment
+  let KEY_NAME = "VETKD_KEY_NAME_PLACEHOLDER";
+
+  // vetKD API functions for frontend
+
+  /**
+   * Get the public key for this canister's vetKD key
+   * This is needed by the frontend to perform encryption
+   */
+  public shared ({ caller }) func getVetKdPublicKey() : async Blob {
+    AccessControl.initialize(accessControlState, caller);
+
+    let keyId : VetKdKeyId = {
+      curve = #bls12_381_g2;
+      name = KEY_NAME;
+    };
+
+    let args : VetKdPublicKeyArgs = {
+      canister_id = null; // Use current canister
+      context = Text.encodeUtf8(DOMAIN_SEPARATOR);
+      key_id = keyId;
+    };
+
+    let result = await vetKdSystemApi.vetkd_public_key(args);
+    result.public_key;
+  };
+
+  /**
+   * Derive an encrypted key for a specific user and transport public key
+   * This returns a key encrypted with the user's transport secret key
+   */
+  public shared ({ caller }) func deriveEncryptedKey(transportPublicKey : Blob, derivationInput : Blob) : async Blob {
+    AccessControl.initialize(accessControlState, caller);
+
+    let keyId : VetKdKeyId = {
+      curve = #bls12_381_g2;
+      name = KEY_NAME;
+    };
+
+    let args : VetKdDeriveKeyArgs = {
+      context = Text.encodeUtf8(DOMAIN_SEPARATOR);
+      input = derivationInput;
+      key_id = keyId;
+      transport_public_key = transportPublicKey;
+    };
+
+    let result = await vetKdSystemApi.vetkd_derive_key(args);
+    result.encrypted_key;
+  };
+
+  /**
+   * Legacy function for backward compatibility
+   * Now returns user-specific derivation input for vetKD
+   */
   public shared ({ caller }) func getUserEncryptionKey() : async Blob {
-    await deriveUserKey(caller);
+    AccessControl.initialize(accessControlState, caller);
+
+    // Return the caller's principal as derivation input
+    // This ensures each user gets a unique key derived from the same vetKD key
+    Principal.toBlob(caller);
+  };
+
+  /**
+   * Get IBE identity derivation for the calling user
+   * Returns the user's principal as IBE identity - the actual IBE private key
+   * will be derived on the frontend using the master public key
+   */
+  public shared ({ caller }) func getIBEIdentity() : async Blob {
+    AccessControl.initialize(accessControlState, caller);
+
+    // Return the caller's principal as IBE identity
+    // This will be used with the master public key to derive the private key on frontend
+    Principal.toBlob(caller);
   };
 
   // Types
