@@ -64,7 +64,7 @@ persistent actor Journal {
   let DOMAIN_SEPARATOR = "doo-journal-app";
 
   // Key name for this specific application - set by environment
-  let KEY_NAME = "VETKD_KEY_NAME_PLACEHOLDER";
+  let KEY_NAME = "key_1";
 
   // vetKD API functions for frontend
 
@@ -162,8 +162,7 @@ persistent actor Journal {
   public type JournalEntry = {
     id : Text;
     title : Text;
-    content : Blob; // Now stores encrypted content as Blob
-    contentType : Text; // "encrypted" | "plaintext"
+    content : Text;
     isPublic : Bool;
     timestamp : Int;
     date : Int;
@@ -213,8 +212,7 @@ persistent actor Journal {
   // ---- Journal entries ----
   public shared ({ caller }) func createJournalEntry(
     title : Text,
-    content : Blob,
-    contentType : Text,
+    content : Text,
     isPublic : Bool,
     date : Int,
     imagePath : ?Text,
@@ -230,7 +228,6 @@ persistent actor Journal {
       id = entryId;
       title;
       content;
-      contentType;
       isPublic;
       timestamp = Time.now();
       date;
@@ -250,8 +247,7 @@ persistent actor Journal {
   public shared ({ caller }) func updateJournalEntry(
     entryId : Text,
     title : Text,
-    content : Blob,
-    contentType : Text,
+    content : Text,
     isPublic : Bool,
     date : Int,
     imagePath : ?Text,
@@ -274,7 +270,6 @@ persistent actor Journal {
                 id = entryId;
                 title;
                 content;
-                contentType;
                 isPublic;
                 timestamp = Time.now();
                 date;

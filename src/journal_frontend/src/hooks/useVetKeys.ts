@@ -35,6 +35,20 @@ async function loadVetKeys() {
 }
 
 // Placeholder encryption implementation (fallback)
+// Helper functions to convert between Uint8Array and base64 strings
+function uint8ArrayToBase64(array: Uint8Array): string {
+  return btoa(String.fromCharCode.apply(null, Array.from(array)));
+}
+
+function base64ToUint8Array(base64: string): Uint8Array {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
 class TempCrypto {
   private key: Uint8Array;
 
@@ -42,7 +56,7 @@ class TempCrypto {
     this.key = key;
   }
 
-  encrypt(data: string): Uint8Array {
+  encrypt(data: string): string {
     const encoder = new TextEncoder();
     const dataBytes = encoder.encode(data);
     
@@ -52,10 +66,12 @@ class TempCrypto {
       encrypted[i] = dataBytes[i] ^ this.key[i % this.key.length];
     }
     
-    return encrypted;
+    return uint8ArrayToBase64(encrypted);
   }
 
-  decrypt(encryptedData: Uint8Array): string {
+  decrypt(encryptedString: string): string {
+    const encryptedData = base64ToUint8Array(encryptedString);
+    
     // Simple XOR decryption for testing
     const decrypted = new Uint8Array(encryptedData.length);
     for (let i = 0; i < encryptedData.length; i++) {
@@ -135,7 +151,7 @@ export function useVetKeys() {
     }
   }, [actor, transportSecretKey, derivedPublicKey, useRealVetKeys, tryVetKeys]);
 
-  const encryptContent = useCallback(async (content: string): Promise<Uint8Array> => {
+  const encryptContent = useCallback(async (content: string): Promise<string> => {
     try {
       const keys = await initializeVetKeys();
       
@@ -170,10 +186,10 @@ export function useVetKeys() {
         
         // Use this as a symmetric key for AES encryption
         const crypto = new TempCrypto(userKey);
-        const encryptedData = crypto.encrypt(content);
+        const encryptedString = crypto.encrypt(content);
         
         debug.log('Successfully encrypted with deterministic user key');
-        return encryptedData;
+        return encryptedString;
       }
     } catch (error) {
       debug.error('IBE encryption failed:', error);
@@ -186,7 +202,7 @@ export function useVetKeys() {
     return crypto.encrypt(content);
   }, [initializeVetKeys, useRealVetKeys, actor]);
 
-  const decryptContent = useCallback(async (encryptedData: Uint8Array): Promise<string> => {
+  const decryptContent = useCallback(async (encryptedString: string): Promise<string> => {
     try {
       const keys = await initializeVetKeys();
       
@@ -220,7 +236,7 @@ export function useVetKeys() {
         
         // Use this as a symmetric key for AES decryption
         const crypto = new TempCrypto(userKey);
-        const decryptedMessage = crypto.decrypt(encryptedData);
+        const decryptedMessage = crypto.decrypt(encryptedString);
         
         debug.log('Successfully decrypted with deterministic user key');
         return decryptedMessage;
@@ -233,7 +249,7 @@ export function useVetKeys() {
     debug.warn('Using temporary decryption (not secure)');
     const tempKey = new TextEncoder().encode('temp_encryption_key_123456789');
     const crypto = new TempCrypto(tempKey);
-    return crypto.decrypt(encryptedData);
+    return crypto.decrypt(encryptedString);
   }, [initializeVetKeys, useRealVetKeys, actor]);
 
   return {

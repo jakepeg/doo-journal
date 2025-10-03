@@ -153,7 +153,7 @@ self.addEventListener('fetch', (event) => {
             }
             return response;
           })
-          .catch(() => {
+          .catch((fetchError) => {
             // For images, return a placeholder when offline
             if (request.destination === 'image') {
               return new Response(
@@ -161,7 +161,7 @@ self.addEventListener('fetch', (event) => {
                 { headers: { 'Content-Type': 'image/svg+xml' } }
               );
             }
-            throw error;
+            throw fetchError;
           });
       })
   );

@@ -9,7 +9,7 @@
   "start": "npm run start --workspaces --if-present",
   "build": "npm run build --workspaces --if-present",
   "prebuild": "npm run prebuild --workspaces --if-present",
-  "deploy": "node scripts/build-backend.js && dfx deploy",
+  "deploy": "node scripts/build-backend.js && dfx deploy && node scripts/restore-backend.js",
   "deploy:ic": "node scripts/deploy-mainnet.js",
   "update-env": "node scripts/update-env.js --force",
   "test:encryption": "node scripts/test-encryption.js"

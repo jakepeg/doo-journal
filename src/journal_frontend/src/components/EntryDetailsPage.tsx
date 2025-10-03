@@ -43,12 +43,8 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
       // DecryptedJournalEntry
       return entry.content;
     } else {
-      // JournalEntry with Blob content - convert to string for display
-      const content = entry.content;
-      if (content instanceof Uint8Array || Array.isArray(content)) {
-        return new TextDecoder().decode(new Uint8Array(content));
-      }
-      return String(content);
+      // JournalEntry - content is already a string
+      return String(entry.content);
     }
   };
 
@@ -60,16 +56,12 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
     } else {
       // Convert JournalEntry to DecryptedJournalEntry
       const content = entry.content;
-      const stringContent = content instanceof Uint8Array || Array.isArray(content)
-        ? new TextDecoder().decode(new Uint8Array(content))
-        : String(content);
+      const stringContent = String(content);
       
       return {
         ...entry,
         content: stringContent,
-        _originalContent: content instanceof Uint8Array || Array.isArray(content) 
-          ? content 
-          : undefined
+        _originalContent: stringContent
       };
     }
   };

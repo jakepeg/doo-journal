@@ -41,15 +41,6 @@ try {
   console.error("❌ Build failed:", error.message);
   process.exit(1);
 } finally {
-  // Restore the original file (optional, for clean git state)
-  if (fs.existsSync(backupPath)) {
-    try {
-      const backupContent = fs.readFileSync(backupPath, "utf8");
-      fs.writeFileSync(backendPath, backupContent);
-      fs.unlinkSync(backupPath);
-      console.log("🔄 Restored original main.mo");
-    } catch (e) {
-      console.warn("⚠️  Could not restore original main.mo:", e.message);
-    }
-  }
+  // Don't restore automatically - let deployment script handle it
+  console.log("📄 Backend build complete (backup saved for later restore)");
 }

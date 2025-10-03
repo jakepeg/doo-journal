@@ -23,8 +23,8 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
   const navigate = useNavigate();
 
   // Helper to convert content to string for display
-  const getContentString = (content: Uint8Array | number[]): string => {
-    return new TextDecoder().decode(new Uint8Array(content));
+  const getContentString = (content: string): string => {
+    return content;
   };
 
   const renderContent = (content: string) => {

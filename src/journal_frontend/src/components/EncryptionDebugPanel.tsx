@@ -38,7 +38,6 @@ export default function EncryptionDebugPanel() {
                   </div>
                   
                   <div className="space-y-1 text-xs text-gray-600">
-                    <div><strong>Content Type:</strong> {entry.contentType || 'unknown'}</div>
                     <div><strong>Content Preview:</strong> {entry.content.substring(0, 100)}...</div>
                     {!entry.isPublic && entry._originalContent && (
                       <>

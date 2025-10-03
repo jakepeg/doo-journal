@@ -77,7 +77,7 @@ export function useSaveUserProfile() {
 //
 export type DecryptedJournalEntry = Omit<JournalEntry, 'content'> & {
   content: string; // Decrypted content as string
-  _originalContent?: Uint8Array | number[]; // Keep original for debugging
+  _originalContent?: string; // Keep original for debugging (now string-based)
 };
 
 //
@@ -102,49 +102,32 @@ export function useGetOwnHomepage() {
           debug.log(`Entry ${index + 1}:`, {
             id: entry.id,
             title: entry.title,
-            contentType: entry.contentType,
             isPublic: entry.isPublic,
             contentLength: entry.content?.length || 0
           });
 
-          if (entry.contentType === 'encrypted') {
-            try {
-              const encryptedData = entry.content instanceof Uint8Array 
-                ? entry.content 
-                : new Uint8Array(entry.content);
-              
-              debug.log(`Decrypting entry ${index + 1} (${entry.title}):`, {
-                encryptedLength: encryptedData.length,
-                firstBytes: Array.from(encryptedData.slice(0, 10))
-              });
-              
-              const decryptedContent = await decryptContent(encryptedData);
-              
-              debug.log(`Successfully decrypted entry ${index + 1}:`, {
-                decryptedLength: decryptedContent.length,
-                preview: decryptedContent.substring(0, 50) + '...'
-              });
-              
-              return {
-                ...entry,
-                content: decryptedContent,
-                _originalContent: entry.content,
-              };
-            } catch (error) {
-              debug.error(`Failed to decrypt entry ${index + 1} (${entry.title}):`, error);
-              return {
-                ...entry,
-                content: '[Decryption failed]',
-              };
-            }
-          } else {
-            // Plaintext content
-            const content = entry.content instanceof Uint8Array
-              ? new TextDecoder().decode(entry.content)
-              : new TextDecoder().decode(new Uint8Array(entry.content));
+          // All entries are now encrypted using deterministic encryption
+          try {
+            // Content is stored as encrypted string
+            const decryptedContent = await decryptContent(entry.content);
+            
+            debug.log(`Successfully decrypted entry ${index + 1}:`, {
+              originalLength: entry.content.length,
+              decryptedLength: decryptedContent.length,
+              preview: decryptedContent.substring(0, 50) + '...'
+            });
+            
             return {
               ...entry,
-              content,
+              content: decryptedContent,
+              _originalContent: entry.content,
+            };
+          } catch (error) {
+            debug.error(`Failed to decrypt entry ${index + 1} (${entry.title}):`, error);
+            return {
+              ...entry,
+              content: '[Decryption failed]',
+              _originalContent: entry.content,
             };
           }
         })
@@ -201,33 +184,20 @@ export function useGetJournalEntry(user: Principal, entryId: string) {
       
       if (!entry) return null;
 
-      // Decrypt if encrypted and it's the user's own entry
-      if (entry.contentType === 'encrypted') {
-        try {
-          const encryptedData = entry.content instanceof Uint8Array 
-            ? entry.content 
-            : new Uint8Array(entry.content);
-          const decryptedContent = await decryptContent(encryptedData);
-          return {
-            ...entry,
-            content: decryptedContent,
-            _originalContent: entry.content,
-          } as DecryptedJournalEntry;
-        } catch (error) {
-          console.error('Failed to decrypt entry:', error);
-          return {
-            ...entry,
-            content: '[Decryption failed]',
-          } as DecryptedJournalEntry;
-        }
-      } else {
-        // Plaintext content
-        const content = entry.content instanceof Uint8Array
-          ? new TextDecoder().decode(entry.content)
-          : new TextDecoder().decode(new Uint8Array(entry.content));
+      // All entries are now encrypted using deterministic encryption
+      try {
+        const decryptedContent = await decryptContent(entry.content);
         return {
           ...entry,
-          content,
+          content: decryptedContent,
+          _originalContent: entry.content,
+        } as DecryptedJournalEntry;
+      } catch (error) {
+        console.error('Failed to decrypt entry:', error);
+        return {
+          ...entry,
+          content: '[Decryption failed]',
+          _originalContent: entry.content,
         } as DecryptedJournalEntry;
       }
     },
@@ -288,46 +258,24 @@ export function useCreateJournalEntry() {
     }) => {
       if (!actor) throw new Error('Actor not available');
 
-      let processedContent: Uint8Array;
-      let contentType: string;
-
-      if (isPublic) {
-        // Public entries remain unencrypted
-        processedContent = new TextEncoder().encode(content);
-        contentType = 'plaintext';
-        debug.log('Creating public entry:', {
-          title,
-          contentLength: content.length,
-          processedLength: processedContent.length
-        });
-      } else {
-        // Private entries are encrypted
-        debug.log('Encrypting private entry:', {
-          title,
-          originalContent: content.substring(0, 50) + '...',
-          originalLength: content.length
-        });
-        
-        processedContent = await encryptContent(content);
-        contentType = 'encrypted';
-        
-        debug.log('Entry encrypted:', {
-          title,
-          encryptedLength: processedContent.length,
-          firstEncryptedBytes: Array.from(processedContent.slice(0, 10))
-        });
-      }
-
-      // Convert Uint8Array to number array for IDL serialization
-      const blobData = Array.from(processedContent);
-
-      // Approach 2: Try direct Uint8Array (fallback)
-      // const blobData = processedContent;
+      // All entries are now encrypted for consistency
+      debug.log('Encrypting entry:', {
+        title,
+        isPublic,
+        originalContent: content.substring(0, 50) + '...',
+        originalLength: content.length
+      });
+      
+      const processedContent = await encryptContent(content);
+      
+      debug.log('Entry encrypted:', {
+        title,
+        encryptedLength: processedContent.length
+      });
 
       const result = await actor.createJournalEntry(
         title,
-        blobData, // Send as number array for Candid serialization
-        contentType,
+        processedContent, // Send as encrypted string
         isPublic,
         date,
         imagePath ? [imagePath] : [] // convert to opt text
@@ -373,36 +321,20 @@ export function useUpdateJournalEntry() {
     }) => {
       if (!actor) throw new Error('Actor not available');
 
-      let processedContent: Uint8Array;
-      let contentType: string;
-
-      if (isPublic) {
-        // Public entries remain unencrypted
-        processedContent = new TextEncoder().encode(content);
-        contentType = 'plaintext';
-      } else {
-        // Private entries are encrypted
-        processedContent = await encryptContent(content);
-        contentType = 'encrypted';
-      }
+      // All entries are now encrypted for consistency
+      const processedContent = await encryptContent(content);
 
       console.log('[DEBUG] Updating entry:', {
         entryId,
         title,
         contentLength: processedContent.length,
-        contentType,
-        isPublic,
-        contentPreview: processedContent.slice(0, 20)
+        isPublic
       });
-
-      // Convert to proper format for Candid
-      const blobData = Array.from(processedContent);
       
       return await actor.updateJournalEntry(
         entryId,
         title,
-        blobData, // Send as number array for Candid serialization
-        contentType,
+        processedContent, // Send as encrypted string
         isPublic,
         date,
         imagePath ? [imagePath] : [] // convert to opt text
