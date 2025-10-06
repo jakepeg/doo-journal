@@ -69,12 +69,11 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
       
       // Store the base64 string as the image path
       setImagePath(base64String);
-      
-      // Insert image HTML directly into the content at cursor position
-      const imageHtml = `<img src="${base64String}" alt="${file.name}" style="max-width: 100%; height: auto; margin: 10px 0;" />`;
-      setContent(prev => prev + imageHtml);
-      
-      toast.success('Image uploaded and inserted!');
+      // NOTE: Do NOT manually append <img> to content here; RichTextEditor already
+      // inserts the image at the current cursor position via its internal handler.
+      // Appending again causes a duplicate image at the bottom. This change fixes
+      // the duplicate insertion bug reported by user.
+      toast.success('Image uploaded!');
     } catch (error) {
       console.error('Image upload error:', error);
       toast.error('Failed to upload image');
