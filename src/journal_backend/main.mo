@@ -71,14 +71,14 @@ persistent actor Journal {
     // Simple environment detection based on canister ID pattern
     let selfPrincipal = Principal.fromActor(Journal);
     let selfText = Principal.toText(selfPrincipal);
-    
+
     // Local dfx uses predictable patterns like "rdmx6-jaaaa-aaaaa-aaadq-cai"
     if (Text.contains(selfText, #text "jaaaa") and Text.contains(selfText, #text "aaaaa")) {
       "dfx_test_key" // Local development
     } else {
       "key_1" // Mainnet and other networks
-    }
-  };  // vetKD API functions for frontend
+    };
+  }; // vetKD API functions for frontend
 
   /**
    * Get the public key for this canister's vetKD key
@@ -238,6 +238,13 @@ persistent actor Journal {
       Debug.trap("Unauthorized: Only users can create journal entries");
     };
 
+    // Hard guard: prevent storing extremely large inline content (e.g., massive base64 images)
+    // IC query reply limit is 3,145,728 bytes; keeping single entry well below this helps aggregates.
+    let maxStoreBytes : Nat = 2_000_000; // ~2MB ceiling for raw Text bytes
+    if (Text.size(content) > maxStoreBytes) {
+      Debug.trap("Entry content too large (" # debug_show (Text.size(content)) # " bytes). Please use smaller images or externalize them.");
+    };
+
     let entryId = Text.concat("entry-", debug_show (Time.now()));
     let newEntry : JournalEntry = {
       id = entryId;
@@ -271,6 +278,12 @@ persistent actor Journal {
 
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Debug.trap("Unauthorized: Only users can update journal entries");
+    };
+
+    // Same size guard as create
+    let maxStoreBytes : Nat = 2_000_000;
+    if (Text.size(content) > maxStoreBytes) {
+      Debug.trap("Updated content too large (" # debug_show (Text.size(content)) # " bytes). Please reduce size.");
     };
 
     let entries = PrincipalMapOps.get(journalEntries, caller);
@@ -400,7 +413,39 @@ persistent actor Journal {
       case null { [] };
       case (?userEntries) { userEntries };
     };
-    { profile; entries = allEntries };
+    // Truncate overly large contents for this aggregate query to avoid exceeding reply size limits.
+    let perEntryTruncateBytes : Nat = 50_000; // ~50KB preview per entry keeps list lightweight
+
+    func truncateText(t : Text) : Text {
+      if (Text.size(t) <= perEntryTruncateBytes) { t } else {
+        // Build truncated text safely by iterating chars up to limit
+        let arr = Text.toArray(t);
+        if (arr.size() <= perEntryTruncateBytes) { t } else {
+          let slice = Array.subArray<Char>(arr, 0, perEntryTruncateBytes);
+          Text.concat(Text.fromArray(slice), "...[truncated]");
+        };
+      };
+    };
+
+    // Map entries applying truncation only if needed
+    let truncatedEntries = Array.map<JournalEntry, JournalEntry>(
+      allEntries,
+      func(e : JournalEntry) : JournalEntry {
+        if (Text.size(e.content) > perEntryTruncateBytes) {
+          {
+            id = e.id;
+            title = e.title;
+            content = truncateText(e.content);
+            isPublic = e.isPublic;
+            timestamp = e.timestamp;
+            date = e.date;
+            imagePath = e.imagePath;
+          };
+        } else { e };
+      },
+    );
+
+    { profile; entries = truncatedEntries };
   };
 
   public query func getCoverImagePath(user : Principal) : async ?Text {

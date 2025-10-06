@@ -248,8 +248,46 @@ export function useVetKeys() {
         debug.log('Successfully decoded large content');
         return decoded;
       } catch (error) {
-        debug.error('Failed to decode large content:', error);
-        return '[Decryption failed - large content]';
+        debug.error('Failed to decode large content (attempting salvage preview):', error);
+        // Salvage strategy: clean and trim base64 so atob can parse a prefix
+        // 1. Remove non-base64 chars
+        let cleaned = encoded.replace(/[^A-Za-z0-9+/=]/g, '');
+        // 2. Trim to multiple of 4 length
+        if (cleaned.length > 8) {
+          cleaned = cleaned.slice(0, cleaned.length - (cleaned.length % 4));
+        }
+        let preview : string | null = null;
+        if (cleaned.length > 16) {
+          try {
+            // Limit decode workload
+            const slice = cleaned.slice(0, Math.min(12000, cleaned.length));
+            const partial = atob(slice);
+            try {
+              preview = decodeURIComponent(partial);
+            } catch {
+              // Fallback: use raw partial as UTF-8 attempt
+              preview = partial;
+            }
+          } catch (e2) {
+            debug.warn('Salvage base64 decode failed:', e2);
+          }
+        }
+        if (preview) {
+          // Remove any stray <img ...> fragments or base64 traces
+          let cleaned = preview
+            .replace(/<img[^>]*>/gi, ' ')
+            .replace(/data:image\/(?:png|jpe?g|gif|webp);base64,[A-Za-z0-9+/=]+/gi, ' ')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/&(amp|lt|gt|quot|#39);/gi, (m) => ({'&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&#39;':'\''}[m.toLowerCase()] || ' '))
+            .replace(/\r/g, '')
+            .split('\n').map(seg => seg.replace(/\s+/g,' ').trim()).join('\n').trim();
+          // Collapse multiple blank lines
+          cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+          const clipped = cleaned.length > 500 ? cleaned.slice(0, 500).trimEnd() + '… [preview truncated]' : cleaned;
+          return clipped.length > 0 ? clipped : '[Large content truncated - open entry to view]';
+        }
+        return '[Large content truncated - open entry to view]';
       }
     }
     

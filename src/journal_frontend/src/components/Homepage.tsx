@@ -26,27 +26,53 @@ export default function Homepage() {
   // Text-only preview generator for list (images stripped intentionally)
   const buildPreview = useMemo(() => {
     const IMG_MD = /!\[[^\]]*\]\([^)]*\)/g; // markdown images
-    const IMG_HTML = /<img\b[^>]*>/gi; // html img tags
+    const IMG_HTML_FULL = /<img\b[^>]*>/gi; // complete img tags
+    const IMG_HTML_PARTIAL = /<img\b[^<>{]{0,200}$/gi; // truncated img at string end
+    const BASE64_SNIPPET = /data:image\/(?:png|jpe?g|gif|webp);base64,[A-Za-z0-9+/=]+/gi;
     const SCRIPT_STYLE = /<\/(?:script|style)>|<(?:script|style)[^>]*>.*?<\/(?:script|style)>/gis;
+    const BLOCK_BREAK = /<(?:\/p|br\s*\/|br|\/div|\/li|\/h[1-6]|\/blockquote)>/gi;
     const HTML_TAGS = /<[^>]+>/g;
-    return (raw: string, maxLen = 220) => {
-      if (!raw) return '';
-      // Large content guard (do NOT attempt to process massive inline base64 images)
-      let working = raw.length > 30_000 ? raw.slice(0, 30_000) : raw;
-      // Strip images completely
-      working = working.replace(IMG_MD, ' ');
-      working = working.replace(IMG_HTML, ' ');
-      // Drop scripts/styles for safety
+    const ENTITIES: Record<string,string> = { '&nbsp;':' ', '&amp;':'&', '&lt;':'<', '&gt;':'>', '&quot;':'"', '&#39;':'\'' };
+    const entityRegex = /&(nbsp|amp|lt|gt|quot|#39);/gi;
+    return (raw: string, maxLen = 220) : { text: string; truncated: boolean } => {
+      if (!raw) return { text: '', truncated: false };
+      const largeMarker = raw.startsWith('LARGE_CONTENT:');
+      if (largeMarker) {
+        return { text: '[Large entry – open to view full content]', truncated: true };
+      }
+
+      const originalLength = raw.length;
+      let working = originalLength > 30_000 ? raw.slice(0, 30_000) : raw;
+      const hadLargeToken = /LARGE_CONTENT:[A-Za-z0-9+/=\-%]+/.test(working);
+      working = working.replace(/LARGE_CONTENT:[A-Za-z0-9+/=\-%]+/g, ' ');
+      const hadImages = IMG_MD.test(working) || IMG_HTML_FULL.test(working) || BASE64_SNIPPET.test(working);
+      // Reset lastIndex for global regex re-use side-effects
+      IMG_MD.lastIndex = 0; IMG_HTML_FULL.lastIndex = 0; BASE64_SNIPPET.lastIndex = 0;
+      // Normalize structural breaks
+      working = working.replace(BLOCK_BREAK, '\n');
+      // Strip images
+      working = working.replace(IMG_MD, ' ')
+                       .replace(IMG_HTML_FULL, ' ')
+                       .replace(IMG_HTML_PARTIAL, ' ')
+                       .replace(BASE64_SNIPPET, ' ');
+      // Remove scripts/styles
       working = working.replace(SCRIPT_STYLE, ' ');
-      // Basic lightweight markdown emphasis (bold/italic) to plain text markers removed
-      working = working.replace(/\*\*(.*?)\*\*/g, '$1');
-      working = working.replace(/\*(.*?)\*/g, '$1');
-      // Remove remaining HTML
+      // Entities
+      working = working.replace(entityRegex, (m) => ENTITIES[m.toLowerCase()] || ' ');
+      // Markdown emphasis
+      working = working.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
+      // Tags
       working = working.replace(HTML_TAGS, ' ');
-      // Collapse whitespace
-      working = working.replace(/\s+/g, ' ').trim();
-      if (working.length > maxLen) return working.slice(0, maxLen).trimEnd() + '…';
-      return working;
+      working = working.replace(/<img\s+src="?/gi, ' ').replace(/!\s+/g, ' ');
+      working = working.replace(/\r/g, '');
+      working = working.split('\n').map(seg => seg.replace(/\s+/g, ' ').trim()).join('\n').trim();
+      working = working.replace(/\n{3,}/g, '\n\n');
+      const wasCutByLength = working.length > maxLen;
+      if (wasCutByLength) {
+        working = working.slice(0, maxLen).trimEnd() + '…';
+      }
+      const truncated = wasCutByLength || originalLength > maxLen || hadImages || hadLargeToken;
+      return { text: working, truncated };
     };
   }, []);
 
@@ -318,12 +344,17 @@ export default function Homepage() {
 <CardContent className="pt-1">
   <div className="flex gap-4">
     <div className="flex-1 min-w-0">
-      <p className="text-gray-700 leading-relaxed line-clamp-3 whitespace-pre-wrap break-words">
-        {buildPreview(entry.content)}
-      </p>
-      {entry.content.length > 220 && (
-        <p className="text-purple-600 text-sm mt-2 font-medium">Click to read more...</p>
-      )}
+      {(() => {
+        const preview = buildPreview(entry.content);
+        return (
+          <>
+            <p className="text-gray-700 leading-relaxed line-clamp-3 whitespace-pre-wrap break-words">
+              {preview.text}
+            </p>
+            <p className="text-purple-600 text-sm mt-2 font-medium">Click to read more...</p>
+          </>
+        );
+      })()}
     </div>
   </div>
 </CardContent>
