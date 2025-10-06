@@ -14,7 +14,7 @@ import { useInternetIdentity } from '../hooks/useInternetIdentity';
 // import { useFileUpload } from '../blob-storage/FileStorage';
 import RichTextEditor from './RichTextEditor-new';
 import EmojiPicker from './EmojiPicker';
-import { ArrowLeft, Calendar as CalendarIcon, Globe, Lock, Save, Smile, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Calendar as CalendarIcon, Lock, Unlock, Save, Smile, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -134,6 +134,8 @@ export default function AddEntryPage() {
     console.log('[DEBUG] AddEntryPage: Back to journal clicked');
     navigate({ to: '/' });
   };
+
+  // (Reverted) Panel-level toggle removed due to runtime error; using Switch only.
 
   return (
     <>
@@ -280,12 +282,12 @@ export default function AddEntryPage() {
               </div>
 
               {/* Privacy Settings */}
-              <div className="flex items-center justify-between p-4 rounded-lg border-2 border-purple-200">
+              <div className="flex items-center justify-between p-4 rounded-lg border-2 border-purple-200 select-none">
                 <div className="flex items-center space-x-3">
                   {isPublic ? (
-                    <Globe className="w-5 h-5 text-green-600" />
+                    <Unlock className="w-5 h-5 text-green-600" />
                   ) : (
-                    <Lock className="w-5 h-5 text-gray-600" />
+                    <Lock className="w-5 h-5 text-red-600" />
                   )}
                   <div>
                     <Label htmlFor="privacy" className="text-sm font-semibold text-gray-700">
@@ -303,7 +305,7 @@ export default function AddEntryPage() {
                   id="privacy"
                   checked={isPublic}
                   onCheckedChange={setIsPublic}
-                  className="bg-red-400 data-[state=checked]:bg-green-500"
+                  className="bg-red-500 data-[state=checked]:bg-green-500"
                 />
               </div>
 
