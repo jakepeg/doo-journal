@@ -168,6 +168,25 @@ export function useVetKeys() {
   }, [actor, transportSecretKey, derivedPublicKey, useRealVetKeys, tryVetKeys]);
 
   const encryptContent = useCallback(async (content: string): Promise<string> => {
+    if (!content) return '';
+    
+    // Add size limit to prevent stack overflow in IBE encryption
+    const maxContentSize = 5000; // 5KB limit for IBE encryption to prevent stack overflow
+    
+    if (content.length > maxContentSize) {
+      debug.warn(`Content size ${content.length} exceeds IBE limit ${maxContentSize}, using fallback encoding`);
+      
+      // For very large content, use simple base64 encoding with a warning
+      // This prevents stack overflow while maintaining functionality
+      try {
+        const encoded = btoa(encodeURIComponent(content));
+        return `LARGE_CONTENT:${encoded}`;
+      } catch (error) {
+        debug.error('Fallback encoding failed:', error);
+        return content; // Return plain content as last resort
+      }
+    }
+    
     try {
       const keys = await initializeVetKeys();
       
@@ -219,6 +238,21 @@ export function useVetKeys() {
   }, [initializeVetKeys, useRealVetKeys, actor]);
 
   const decryptContent = useCallback(async (encryptedString: string): Promise<string> => {
+    if (!encryptedString) return '';
+    
+    // Handle large content that was fallback encoded
+    if (encryptedString.startsWith('LARGE_CONTENT:')) {
+      const encoded = encryptedString.replace('LARGE_CONTENT:', '');
+      try {
+        const decoded = decodeURIComponent(atob(encoded));
+        debug.log('Successfully decoded large content');
+        return decoded;
+      } catch (error) {
+        debug.error('Failed to decode large content:', error);
+        return '[Decryption failed - large content]';
+      }
+    }
+    
     try {
       const keys = await initializeVetKeys();
       

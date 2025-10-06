@@ -10,7 +10,7 @@ import JournalEntryModal from './JournalEntryModal';
 import ProfileEditModal from './ProfileEditModal';
 import ProfileSetupModal from './ProfileSetupModal';
 import EncryptionDebugPanel from './EncryptionDebugPanel';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 
 export default function Homepage() {
@@ -23,30 +23,54 @@ export default function Homepage() {
   const [editingEntry, setEditingEntry] = useState<DecryptedJournalEntry | null>(null);
   const { mutate: deleteEntry } = useDeleteJournalEntry();
 
-  const renderContent = (content: string) => {
-  let html = content
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg my-4 shadow-md max-h-[150px] object-contain" crossorigin="anonymous" />')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-purple-300 pl-4 italic text-gray-600 my-2">$1</blockquote>')
-    .replace(/\n/g, '<br />');
+  // Memoize renderContent to prevent recreation on every render and add safety checks
+  const renderContent = useMemo(() => {
+    return (content: string) => {
+      // Safety check for large content to prevent stack overflow
+      if (content.length > 5000) {
+        const truncated = content.substring(0, 5000);
+        return `<div class="text-gray-700">${truncated}...</div><p class="text-purple-600 text-sm mt-2"><em>Content truncated for display</em></p>`;
+      }
 
-  // Also handle direct HTML img tags from Quill editor - limit their height on homepage
-  html = html.replace(/<img([^>]*?)style="([^"]*?)"([^>]*?)>/g, (match, beforeStyle, styleContent, afterStyle) => {
-    // Add max-height to existing style, preserving original styling
-    const newStyle = styleContent + '; max-height: 150px; object-fit: contain;';
-    return `<img${beforeStyle}style="${newStyle}"${afterStyle} class="rounded-lg my-4 shadow-md">`;
-  });
+      // Use a more efficient approach to avoid nested regex on large content
+      try {
+        let html = content;
+        
+        // Process in stages to prevent stack overflow
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        
+        // Handle markdown images first
+        html = html.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg my-4 shadow-md max-h-[150px] object-contain" crossorigin="anonymous" />');
+        
+        // Handle lists
+        html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+        html = html.replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-purple-300 pl-4 italic text-gray-600 my-2">$1</blockquote>');
+        
+        // Handle line breaks
+        html = html.replace(/\n/g, '<br />');
 
-  // Handle HTML img tags without style attribute
-  html = html.replace(/<img(?![^>]*style=)([^>]*?)>/g, '<img$1 style="max-height: 150px; object-fit: contain;" class="max-w-full h-auto rounded-lg my-4 shadow-md">');
+        // Handle HTML img tags - split into separate operations to prevent deep recursion
+        // First, handle images with existing style attributes
+        html = html.replace(/<img([^>]*?)style="([^"]*?)"([^>]*?)>/g, (match, beforeStyle, styleContent, afterStyle) => {
+          const newStyle = styleContent + '; max-height: 150px; object-fit: contain;';
+          return `<img${beforeStyle}style="${newStyle}"${afterStyle} class="rounded-lg my-4 shadow-md">`;
+        });
 
-  // Wrap list items in ul
-  html = html.replace(/(<li>.*<\/li>)/s, '<ul class="list-disc list-inside space-y-1 my-4">$1</ul>');
+        // Then handle images without style attributes
+        html = html.replace(/<img(?![^>]*style=)([^>]*?)>/g, '<img$1 style="max-height: 150px; object-fit: contain;" class="max-w-full h-auto rounded-lg my-4 shadow-md">');
 
-  return html;
-};
+        // Finally wrap list items
+        html = html.replace(/(<li>.*<\/li>)/s, '<ul class="list-disc list-inside space-y-1 my-4">$1</ul>');
+
+        return html;
+      } catch (error) {
+        console.error('Error rendering content:', error);
+        // Fallback to plain text if rendering fails
+        return `<div class="text-gray-700">${content.substring(0, 1000)}${content.length > 1000 ? '...' : ''}</div>`;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     // Check if user needs profile setup after homepage data is loaded
