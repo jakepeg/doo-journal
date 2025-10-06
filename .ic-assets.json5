@@ -1,5 +1,8 @@
 [
   {
+    disable_security_policy_warning: true,
+  },
+  {
     match: "**/*",
     security_policy: "standard",
     headers: {

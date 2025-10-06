@@ -63,25 +63,22 @@ persistent actor Journal {
   // Domain separator for this dapp - used to isolate keys per application
   let DOMAIN_SEPARATOR = "doo-journal-app";
 
-  // Key name for this specific application - auto-detect based on environment
-  // Local development uses "dfx_test_key", mainnet uses "key_1"
+  // Key name for this specific application - environment detection
+  // Available keys per environment:
+  // - Local: "dfx_test_key"
+  // - Mainnet: "key_1", "test_key_1"
   private func getKeyName() : Text {
-    // Check if we're running locally by examining the management canister ID
-    // Local dfx uses a predictable canister ID pattern
-    let managementId = Principal.toText(Principal.fromActor(vetKdSystemApi));
-
-    // Local dfx management canister is always "aaaaa-aa"
-    // This is a reliable way to detect local vs mainnet
-    if (managementId == "aaaaa-aa") {
-      // We're running locally, but need to check if it's actually local dfx
-      // For now, assume local = dfx_test_key
-      "dfx_test_key";
+    // Simple environment detection based on canister ID pattern
+    let selfPrincipal = Principal.fromActor(Journal);
+    let selfText = Principal.toText(selfPrincipal);
+    
+    // Local dfx uses predictable patterns like "rdmx6-jaaaa-aaaaa-aaadq-cai"
+    if (Text.contains(selfText, #text "jaaaa") and Text.contains(selfText, #text "aaaaa")) {
+      "dfx_test_key" // Local development
     } else {
-      "key_1" // Mainnet
-    };
-  };
-
-  // vetKD API functions for frontend
+      "key_1" // Mainnet and other networks
+    }
+  };  // vetKD API functions for frontend
 
   /**
    * Get the public key for this canister's vetKD key
