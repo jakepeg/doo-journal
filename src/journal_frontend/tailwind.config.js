@@ -5,7 +5,11 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        'fredoka': ['Fredoka', 'Fredoka Fallback', 'system-ui', 'sans-serif'],
+      },
+    },
   },
   plugins: [],
 };

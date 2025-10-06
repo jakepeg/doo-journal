@@ -1,0 +1,25 @@
+[
+  {
+    match: "**/*",
+    security_policy: "standard",
+    headers: {
+      "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://icp0.io https://*.icp0.io https://icp-api.io https://fonts.googleapis.com; img-src 'self' data: blob:; worker-src 'self' blob:; manifest-src 'self'",
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+    },
+  },
+  {
+    match: "sw.js",
+    headers: {
+      "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://icp0.io https://*.icp0.io https://icp-api.io https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "Service-Worker-Allowed": "/",
+    },
+  },
+  {
+    match: "index.html",
+    headers: {
+      "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://icp0.io https://*.icp0.io https://icp-api.io https://fonts.googleapis.com; img-src 'self' data: blob:; worker-src 'self' blob:; manifest-src 'self'",
+    },
+  },
+]

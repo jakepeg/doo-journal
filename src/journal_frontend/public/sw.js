@@ -61,6 +61,12 @@ self.addEventListener('activate', (event) => {
 // Fetch event - serve from cache when offline
 self.addEventListener('fetch', (event) => {
   const { request } = event;
+  
+  // Skip non-http/https requests (chrome-extension, etc.)
+  if (!request.url.startsWith('http')) {
+    return;
+  }
+  
   const url = new URL(request.url);
 
   // Handle navigation requests (HTML pages)
@@ -74,6 +80,9 @@ self.addEventListener('fetch', (event) => {
             caches.open(DYNAMIC_CACHE)
               .then((cache) => {
                 cache.put(request, responseClone);
+              })
+              .catch((error) => {
+                console.log('Service Worker: Failed to cache response', error);
               });
           }
           return response;
@@ -104,6 +113,9 @@ self.addEventListener('fetch', (event) => {
             caches.open(DYNAMIC_CACHE)
               .then((cache) => {
                 cache.put(request, responseClone);
+              })
+              .catch((error) => {
+                console.log('Service Worker: Failed to cache API response', error);
               });
           }
           return response;
@@ -149,6 +161,9 @@ self.addEventListener('fetch', (event) => {
               caches.open(DYNAMIC_CACHE)
                 .then((cache) => {
                   cache.put(request, responseClone);
+                })
+                .catch((error) => {
+                  console.log('Service Worker: Failed to cache static response', error);
                 });
             }
             return response;
