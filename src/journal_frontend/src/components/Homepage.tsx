@@ -1,4 +1,6 @@
 import { useGetOwnHomepage, useDeleteJournalEntry, type DecryptedJournalEntry } from '../hooks/useQueries';
+import { useActor } from '../hooks/useActor';
+import { useVetKeys } from '../hooks/useVetKeys';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from './ui/button';
@@ -17,6 +19,8 @@ export default function Homepage() {
   const navigate = useNavigate();
   const { identity } = useInternetIdentity();
   const { data: homepage, isLoading, error } = useGetOwnHomepage();
+  const { actor } = useActor();
+  const { decryptContent } = useVetKeys();
   const [showEntryModal, setShowEntryModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showProfileSetupModal, setShowProfileSetupModal] = useState(false);
@@ -85,9 +89,40 @@ export default function Homepage() {
     }
   }, [homepage, isLoading, error, identity]);
 
-  const handleEditEntry = (entry: DecryptedJournalEntry) => {
-    setEditingEntry(entry);
-    setShowEntryModal(true);
+  const handleEditEntry = async (entry: DecryptedJournalEntry) => {
+    // Always refetch the single entry to avoid editing a truncated/sanitized homepage version
+    try {
+      if (!identity || !actor) {
+        setEditingEntry(entry); // fallback
+        setShowEntryModal(true);
+        return;
+      }
+      const userId = identity.getPrincipal();
+      const result = await actor.getJournalEntryById(userId, entry.id);
+      const fresh = (result as any)[0]; // unwrapOpt manual (since did file may encode optional as variant)
+      if (!fresh) {
+        setEditingEntry(entry);
+        setShowEntryModal(true);
+        return;
+      }
+      let decrypted = '';
+      try {
+        decrypted = await decryptContent(fresh.content);
+      } catch {
+        decrypted = entry.content; // fallback
+      }
+      const fullEntry: DecryptedJournalEntry = {
+        ...entry,
+        content: decrypted,
+        _originalContent: fresh.content,
+      };
+      setEditingEntry(fullEntry);
+    } catch (e) {
+      console.error('[Homepage] Failed to load full entry before edit:', e);
+      setEditingEntry(entry);
+    } finally {
+      setShowEntryModal(true);
+    }
   };
 
   const handleDeleteEntry = (entryId: string) => {
