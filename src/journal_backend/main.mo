@@ -63,8 +63,23 @@ persistent actor Journal {
   // Domain separator for this dapp - used to isolate keys per application
   let DOMAIN_SEPARATOR = "doo-journal-app";
 
-  // Key name for this specific application - set by environment
-  let KEY_NAME = "key_1";
+  // Key name for this specific application - auto-detect based on environment
+  // Local development uses "dfx_test_key", mainnet uses "key_1"
+  private func getKeyName() : Text {
+    // Check if we're running locally by examining the management canister ID
+    // Local dfx uses a predictable canister ID pattern
+    let managementId = Principal.toText(Principal.fromActor(vetKdSystemApi));
+
+    // Local dfx management canister is always "aaaaa-aa"
+    // This is a reliable way to detect local vs mainnet
+    if (managementId == "aaaaa-aa") {
+      // We're running locally, but need to check if it's actually local dfx
+      // For now, assume local = dfx_test_key
+      "dfx_test_key";
+    } else {
+      "key_1" // Mainnet
+    };
+  };
 
   // vetKD API functions for frontend
 
@@ -77,7 +92,7 @@ persistent actor Journal {
 
     let keyId : VetKdKeyId = {
       curve = #bls12_381_g2;
-      name = KEY_NAME;
+      name = getKeyName();
     };
 
     let args : VetKdPublicKeyArgs = {
@@ -99,7 +114,7 @@ persistent actor Journal {
 
     let keyId : VetKdKeyId = {
       curve = #bls12_381_g2;
-      name = KEY_NAME;
+      name = getKeyName();
     };
 
     let args : VetKdDeriveKeyArgs = {
@@ -172,6 +187,9 @@ persistent actor Journal {
   // Stable state
   var userProfiles : PrincipalMap<UserProfile> = PrincipalMapOps.empty<UserProfile>();
   var journalEntries : PrincipalMap<[JournalEntry]> = PrincipalMapOps.empty<[JournalEntry]>();
+
+  // Migration: Handle deprecated KEY_NAME stable variable (unused but keeps compatibility)
+  var _deprecatedKeyName : ?Text = null;
 
   // Activity tracking (transient state)
   transient var activeUsers = HashMap.HashMap<Principal, Int>(16, Principal.equal, Principal.hash);

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import './index.css';
 import { registerSW } from './utils/sw-registration';
+import './utils/suppress-dev-warnings';
 
 const queryClient = new QueryClient();
 
