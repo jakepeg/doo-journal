@@ -332,9 +332,9 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
               </div>
             </div>
           </CardHeader>
-          <CardContent className="prose prose-lg max-w-none">
+          <CardContent className="max-w-none">
             <div
-              className="text-gray-700 leading-relaxed"
+              className="entry-content text-gray-700 leading-relaxed"
               dangerouslySetInnerHTML={{ __html: renderContent(getDisplayContent(finalEntry)) }}
             />
           </CardContent>

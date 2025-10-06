@@ -53,6 +53,33 @@
     line-height: 1.3;
   }
 
+  /* Standardized entry/body typography */
+  .entry-content p,
+  .entry-content li {
+    font-size: 1.4rem; /* Match base paragraph size */
+    line-height: 1.45;
+  }
+
+  /* Rich text editor (Quill) body + list item normalization */
+  .ql-editor p,
+  .ql-editor li {
+    font-size: 1.4rem; /* same as base body */
+    line-height: 1.45;
+  }
+  .ql-editor li::marker {
+    font-size: 1.1em; /* keep marker proportional */
+  }
+
+  .entry-content ul,
+  .entry-content ol {
+    padding-left: 1.4rem; /* Ensure proper indentation */
+    margin: 0.75rem 0 1rem;
+  }
+
+  .entry-content li + li {
+    margin-top: 0.35rem;
+  }
+
   button {
   cursor: pointer !important;
 }

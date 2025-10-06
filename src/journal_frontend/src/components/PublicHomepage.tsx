@@ -191,7 +191,7 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
                 {profile.name}
               </h2>
               {profile.bio && (
-                <p className="text-gray-600 text-lg mb-4">{profile.bio}</p>
+                <p className="text-gray-600 mb-4">{profile.bio}</p>
               )}
               <div className="flex items-center space-x-4 text-sm text-gray-500">
                 <span>{entries.length} shared entries</span>

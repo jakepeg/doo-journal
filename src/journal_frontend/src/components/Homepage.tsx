@@ -256,7 +256,7 @@ export default function Homepage() {
             <h2 className="text-3xl text-gray-900 mt-1 mb-1">
               {profile?.name || 'Anonymous Writer'}
             </h2>
-            {profile?.bio && <p className="text-gray-600 text-lg mb-2">{profile.bio}</p>}
+            {profile?.bio && <p className="text-gray-600 mb-2">{profile.bio}</p>}
             <div className="flex items-center space-x-4 text-sm text-gray-500">
               <span>{entries.length} journal entries</span>
               <span>{entries.filter(e => e.isPublic).length} public</span>
