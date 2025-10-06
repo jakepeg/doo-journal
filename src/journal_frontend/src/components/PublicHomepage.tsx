@@ -5,7 +5,7 @@ import { Badge } from './ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Globe, Sparkles, Share2 } from 'lucide-react';
 import { Principal } from '@dfinity/principal';
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useActor } from '../hooks/useActor';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
@@ -22,23 +22,105 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
   const { actor } = useActor();
   const navigate = useNavigate();
 
-  // Helper to convert content to string for display
-  const getContentString = (content: string): string => {
-    return content;
-  };
+  // Decode large content for public entries (no encryption, just base64 + percent encoding)
+  const decodeLargeContent = useCallback((encoded: string): string => {
+    try {
+      let base = encoded.trim();
+      if (!base) return '';
+      
+      // If percent-encoded (contains %XX sequences), decode once to restore raw base64
+      if (/%[0-9A-Fa-f]{2}/.test(base)) {
+        try { base = decodeURIComponent(base); } catch {}
+      }
+      
+      // Convert URL-safe variants
+      base = base.replace(/-/g, '+').replace(/_/g, '/');
+      // Strip anything not base64 set
+      base = base.replace(/[^A-Za-z0-9+/=]/g, '');
+      // Fix padding (length must be multiple of 4)
+      if (base.length % 4 !== 0) {
+        base = base.padEnd(base.length + (4 - (base.length % 4)), '=');
+      }
+      
+      const bin = atob(base);
+      // Try URI component decode (content was encoded with encodeURIComponent)
+      try {
+        return decodeURIComponent(bin);
+      } catch {
+        return bin; // return raw if not URI encoded
+      }
+    } catch (e) {
+      console.error('Failed to decode large content:', e);
+      return '[Content could not be decoded]';
+    }
+  }, []);
 
-  const renderContent = (content: string) => {
-    let html = content
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg my-4 shadow-md" crossorigin="anonymous" />')
-      .replace(/^- (.+)$/gm, '<li>$1</li>')
-      .replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-purple-300 pl-4 italic text-gray-600 my-2">$1</blockquote>')
-      .replace(/\n/g, '<br />');
+  // Text-only preview generator for list (images stripped intentionally)
+  // Same logic as private Homepage for consistency
+  const buildPreview = useMemo(() => {
+    const IMG_MD = /!\[[^\]]*\]\([^)]*\)/g; // markdown images
+    const IMG_HTML_FULL = /<img\b[^>]*>/gi; // complete img tags
+    const IMG_HTML_PARTIAL = /<img\b[^<>{]{0,200}$/gi; // truncated img at string end
+    const BASE64_SNIPPET = /data:image\/(?:png|jpe?g|gif|webp);base64,[A-Za-z0-9+/=]+/gi;
+    const SCRIPT_STYLE = /<\/(?:script|style)>|<(?:script|style)[^>]*>.*?<\/(?:script|style)>/gis;
+    const BLOCK_BREAK = /<(?:\/p|br\s*\/|br|\/div|\/li|\/h[1-6]|\/blockquote)>/gi;
+    const HTML_TAGS = /<[^>]+>/g;
+    const ENTITIES: Record<string,string> = { '&nbsp;':' ', '&amp;':'&', '&lt;':'<', '&gt;':'>', '&quot;':'"', '&#39;':'\'' };
+    const entityRegex = /&(nbsp|amp|lt|gt|quot|#39);/gi;
+    return (raw: string, maxLen = 220) : { text: string; truncated: boolean } => {
+      if (!raw) return { text: '', truncated: false };
+      const largeMarker = raw.startsWith('LARGE_CONTENT:');
+      if (largeMarker) {
+        // Decode the large content instead of showing placeholder
+        const encoded = raw.replace('LARGE_CONTENT:', '');
+        const decoded = decodeLargeContent(encoded);
+        raw = decoded;
+      }
 
-    html = html.replace(/(<li>.*<\/li>)/s, '<ul class="list-disc list-inside space-y-1 my-4">$1</ul>');
-    return html;
-  };
+      // If content is percent-encoded (e.g. "%3Cp%3E") but not yet decoded, attempt a safe decode once
+      if (!raw.includes('<') && /%3C/i.test(raw)) {
+        try {
+          const decodedOnce = decodeURIComponent(raw);
+          if (decodedOnce.includes('<')) {
+            raw = decodedOnce;
+          }
+        } catch {/* ignore decode errors */}
+      }
+
+      const originalLength = raw.length;
+      let working = originalLength > 30_000 ? raw.slice(0, 30_000) : raw;
+      const hadLargeToken = /LARGE_CONTENT:[A-Za-z0-9+/=\-%]+/.test(working);
+      working = working.replace(/LARGE_CONTENT:[A-Za-z0-9+/=\-%]+/g, ' ');
+      const hadImages = IMG_MD.test(working) || IMG_HTML_FULL.test(working) || BASE64_SNIPPET.test(working);
+      // Reset lastIndex for global regex re-use side-effects
+      IMG_MD.lastIndex = 0; IMG_HTML_FULL.lastIndex = 0; BASE64_SNIPPET.lastIndex = 0;
+      // Normalize structural breaks
+      working = working.replace(BLOCK_BREAK, '\n');
+      // Strip images
+      working = working.replace(IMG_MD, ' ')
+                       .replace(IMG_HTML_FULL, ' ')
+                       .replace(IMG_HTML_PARTIAL, ' ')
+                       .replace(BASE64_SNIPPET, ' ');
+      // Remove scripts/styles
+      working = working.replace(SCRIPT_STYLE, ' ');
+      // Entities
+      working = working.replace(entityRegex, (m) => ENTITIES[m.toLowerCase()] || ' ');
+      // Markdown emphasis
+      working = working.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
+      // Tags
+      working = working.replace(HTML_TAGS, ' ');
+      working = working.replace(/<img\s+src="?/gi, ' ').replace(/!\s+/g, ' ');
+      working = working.replace(/\r/g, '');
+      working = working.split('\n').map(seg => seg.replace(/\s+/g, ' ').trim()).join('\n').trim();
+      working = working.replace(/\n{3,}/g, '\n\n');
+      const wasCutByLength = working.length > maxLen;
+      if (wasCutByLength) {
+        working = working.slice(0, maxLen).trimEnd() + '…';
+      }
+      const truncated = wasCutByLength || originalLength > maxLen || hadImages || largeMarker;
+      return { text: working, truncated };
+    };
+  }, [decodeLargeContent]);
 
   const handleStartJournal = () => {
     window.location.href = window.location.origin;
@@ -212,7 +294,9 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
         )}
 
         {/* Shared Journal Entries Section */}
-
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl text-gray-900">Shared Journal Entries</h3>
+        </div>
 
         {entries.length === 0 ? (
           <Card className="border-2 border-dashed border-purple-200 bg-purple-50/50 mb-8">
@@ -236,12 +320,12 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
             {entries
               .sort((a, b) => Number(b.timestamp) - Number(a.timestamp))
               .map((entry) => (
-                <Card
+                <Card 
                   key={entry.id}
-                  className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all cursor-pointer group"
+                  className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all cursor-pointer group gap-0"
                   onClick={() => handleEntryClick(entry.id)}
                 >
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-1">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <CardTitle className="text-xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors mb-2">
@@ -259,20 +343,20 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="pt-4">
+                  <CardContent className="pt-1">
                     <div className="flex gap-4">
                       <div className="flex-1 min-w-0">
-                        <div
-                          className="text-gray-700 leading-relaxed line-clamp-3"
-                          dangerouslySetInnerHTML={{ 
-                            __html: renderContent(getContentString(entry.content))
-                          }}
-                        />
-                        {getContentString(entry.content).length > 200 && (
-                          <p className="text-purple-600 text-sm mt-2 font-medium">
-                            Click to read more...
-                          </p>
-                        )}
+                        {(() => {
+                          const preview = buildPreview(entry.content);
+                          return (
+                            <>
+                              <p className="text-gray-700 leading-relaxed line-clamp-3 whitespace-pre-wrap break-words">
+                                {preview.text}
+                              </p>
+                              <p className="text-purple-600 text-sm mt-2 font-medium">Click to read more...</p>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   </CardContent>
