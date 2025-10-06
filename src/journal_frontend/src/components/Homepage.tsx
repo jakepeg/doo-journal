@@ -23,52 +23,30 @@ export default function Homepage() {
   const [editingEntry, setEditingEntry] = useState<DecryptedJournalEntry | null>(null);
   const { mutate: deleteEntry } = useDeleteJournalEntry();
 
-  // Memoize renderContent to prevent recreation on every render and add safety checks
-  const renderContent = useMemo(() => {
-    return (content: string) => {
-      // Safety check for large content to prevent stack overflow
-      if (content.length > 5000) {
-        const truncated = content.substring(0, 5000);
-        return `<div class="text-gray-700">${truncated}...</div><p class="text-purple-600 text-sm mt-2"><em>Content truncated for display</em></p>`;
-      }
-
-      // Use a more efficient approach to avoid nested regex on large content
-      try {
-        let html = content;
-        
-        // Process in stages to prevent stack overflow
-        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        
-        // Handle markdown images first
-        html = html.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg my-4 shadow-md max-h-[150px] object-contain" crossorigin="anonymous" />');
-        
-        // Handle lists
-        html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-        html = html.replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-purple-300 pl-4 italic text-gray-600 my-2">$1</blockquote>');
-        
-        // Handle line breaks
-        html = html.replace(/\n/g, '<br />');
-
-        // Handle HTML img tags - split into separate operations to prevent deep recursion
-        // First, handle images with existing style attributes
-        html = html.replace(/<img([^>]*?)style="([^"]*?)"([^>]*?)>/g, (match, beforeStyle, styleContent, afterStyle) => {
-          const newStyle = styleContent + '; max-height: 150px; object-fit: contain;';
-          return `<img${beforeStyle}style="${newStyle}"${afterStyle} class="rounded-lg my-4 shadow-md">`;
-        });
-
-        // Then handle images without style attributes
-        html = html.replace(/<img(?![^>]*style=)([^>]*?)>/g, '<img$1 style="max-height: 150px; object-fit: contain;" class="max-w-full h-auto rounded-lg my-4 shadow-md">');
-
-        // Finally wrap list items
-        html = html.replace(/(<li>.*<\/li>)/s, '<ul class="list-disc list-inside space-y-1 my-4">$1</ul>');
-
-        return html;
-      } catch (error) {
-        console.error('Error rendering content:', error);
-        // Fallback to plain text if rendering fails
-        return `<div class="text-gray-700">${content.substring(0, 1000)}${content.length > 1000 ? '...' : ''}</div>`;
-      }
+  // Text-only preview generator for list (images stripped intentionally)
+  const buildPreview = useMemo(() => {
+    const IMG_MD = /!\[[^\]]*\]\([^)]*\)/g; // markdown images
+    const IMG_HTML = /<img\b[^>]*>/gi; // html img tags
+    const SCRIPT_STYLE = /<\/(?:script|style)>|<(?:script|style)[^>]*>.*?<\/(?:script|style)>/gis;
+    const HTML_TAGS = /<[^>]+>/g;
+    return (raw: string, maxLen = 220) => {
+      if (!raw) return '';
+      // Large content guard (do NOT attempt to process massive inline base64 images)
+      let working = raw.length > 30_000 ? raw.slice(0, 30_000) : raw;
+      // Strip images completely
+      working = working.replace(IMG_MD, ' ');
+      working = working.replace(IMG_HTML, ' ');
+      // Drop scripts/styles for safety
+      working = working.replace(SCRIPT_STYLE, ' ');
+      // Basic lightweight markdown emphasis (bold/italic) to plain text markers removed
+      working = working.replace(/\*\*(.*?)\*\*/g, '$1');
+      working = working.replace(/\*(.*?)\*/g, '$1');
+      // Remove remaining HTML
+      working = working.replace(HTML_TAGS, ' ');
+      // Collapse whitespace
+      working = working.replace(/\s+/g, ' ').trim();
+      if (working.length > maxLen) return working.slice(0, maxLen).trimEnd() + '…';
+      return working;
     };
   }, []);
 
@@ -340,14 +318,11 @@ export default function Homepage() {
 <CardContent className="pt-1">
   <div className="flex gap-4">
     <div className="flex-1 min-w-0">
-      <div
-        className="text-gray-700 leading-relaxed line-clamp-3"
-        dangerouslySetInnerHTML={{ __html: renderContent(entry.content) }}
-      />
-      {entry.content.length > 200 && (
-        <p className="text-purple-600 text-sm mt-2 font-medium">
-          Click to read more...
-        </p>
+      <p className="text-gray-700 leading-relaxed line-clamp-3 whitespace-pre-wrap break-words">
+        {buildPreview(entry.content)}
+      </p>
+      {entry.content.length > 220 && (
+        <p className="text-purple-600 text-sm mt-2 font-medium">Click to read more...</p>
       )}
     </div>
   </div>
