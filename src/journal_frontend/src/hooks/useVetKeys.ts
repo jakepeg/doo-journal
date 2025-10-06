@@ -83,6 +83,10 @@ class TempCrypto {
   }
 }
 
+// Cache for vetKD public key to avoid repeated fetches
+let cachedPublicKey: Uint8Array | null = null;
+let publicKeyPromise: Promise<Uint8Array> | null = null;
+
 export function useVetKeys() {
   const { actor } = useActor();
   const [transportSecretKey, setTransportSecretKey] = useState<any>(null);
@@ -126,10 +130,22 @@ export function useVetKeys() {
         let currentDerivedKey = derivedPublicKey;
         if (!currentDerivedKey) {
           debug.log('Fetching vetKD public key from backend...');
-          const publicKeyBytes = await actor.getVetKdPublicKey();
-          currentDerivedKey = DerivedPublicKey.deserialize(new Uint8Array(publicKeyBytes));
+          
+          // Use cached public key or fetch if not available
+          if (!cachedPublicKey) {
+            if (!publicKeyPromise) {
+              publicKeyPromise = actor.getVetKdPublicKey().then(bytes => {
+                cachedPublicKey = new Uint8Array(bytes);
+                return cachedPublicKey;
+              });
+            }
+            await publicKeyPromise;
+            publicKeyPromise = null; // Reset promise after completion
+          }
+          
+          currentDerivedKey = DerivedPublicKey.deserialize(cachedPublicKey);
           setDerivedPublicKey(currentDerivedKey);
-          debug.log('Received and parsed vetKD public key');
+          debug.log('Received and parsed vetKD public key (cached)');
         }
 
         return { 

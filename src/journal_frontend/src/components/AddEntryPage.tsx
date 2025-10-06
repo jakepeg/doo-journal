@@ -67,22 +67,19 @@ export default function AddEntryPage() {
     // Convert date to nanoseconds (bigint)
     const dateInNanoseconds = BigInt(selectedDate.getTime() * 1000000);
 
+    // Navigate immediately with optimistic update
+    console.log('[DEBUG] AddEntryPage: Creating entry and navigating optimistically');
+    
     createEntry({
       title: title.trim(),
       content: content.trim(),
       isPublic,
       date: dateInNanoseconds,
       imagePath: imagePath || null,
-    }, {
-      onSuccess: () => {
-        console.log('[DEBUG] AddEntryPage: Entry created successfully, navigating to home');
-        // Use router navigation instead of window.location
-        navigate({ to: '/' });
-      },
-      onError: (error) => {
-        console.error('[DEBUG] AddEntryPage: Error creating entry:', error);
-      }
     });
+
+    // Navigate immediately - the optimistic update will show the entry instantly
+    navigate({ to: '/' });
   };
 
   const handleImageUpload = useCallback(async (file: File) => {

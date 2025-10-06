@@ -139,8 +139,10 @@ export function useGetOwnHomepage() {
       };
     },
     enabled: !!actor && !actorFetching,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes - longer cache for better performance
+    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
     retry: 2,
+    refetchOnWindowFocus: false, // Don't refetch on window focus for better UX
   });
 }
 
@@ -281,15 +283,63 @@ export function useCreateJournalEntry() {
         imagePath ? [imagePath] : [] // convert to opt text
       );
       
-      // Entry created successfully
-      return result;
+      // Return the entry data for optimistic update
+      return {
+        entryId: result,
+        originalData: { title, content, isPublic, date, imagePath }
+      };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ownHomepage'] });
-      queryClient.invalidateQueries({ queryKey: ['allJournalEntries'] });
+    // Add optimistic update
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['ownHomepage'] });
+
+      // Snapshot the previous value
+      const previousData = queryClient.getQueryData(['ownHomepage']);
+
+      // Optimistically update to the new value
+      const tempId = `temp-${Date.now()}`;
+      const optimisticEntry: DecryptedJournalEntry = {
+        id: tempId,
+        title: variables.title,
+        content: variables.content, // Use plain content for immediate display
+        isPublic: variables.isPublic,
+        timestamp: BigInt(Date.now() * 1000000), // nanoseconds
+        date: variables.date,
+        imagePath: variables.imagePath ? [variables.imagePath] : [],
+        _originalContent: variables.content
+      };
+
+      queryClient.setQueryData(['ownHomepage'], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          entries: [optimisticEntry, ...old.entries]
+        };
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousData };
+    },
+    onSuccess: (data) => {
+      // Use more efficient refetch instead of full invalidation
+      queryClient.refetchQueries({ 
+        queryKey: ['ownHomepage'],
+        type: 'active' // Only refetch if query is currently active
+      });
+      
+      // Don't invalidate allJournalEntries immediately to avoid cascade
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['allJournalEntries'] });
+      }, 1000);
+      
       toast.success('Journal entry created!');
     },
-    onError: (error: any) => {
+    onError: (error: any, variables, context) => {
+      // Revert the optimistic update
+      if (context?.previousData) {
+        queryClient.setQueryData(['ownHomepage'], context.previousData);
+      }
       toast.error('Failed to create entry: ' + error.message);
     },
   });
