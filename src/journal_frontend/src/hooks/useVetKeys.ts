@@ -242,16 +242,58 @@ export function useVetKeys() {
     
     // Handle large content that was fallback encoded
     if (encryptedString.startsWith('LARGE_CONTENT:')) {
-      const encoded = encryptedString.replace('LARGE_CONTENT:', '');
-      try {
-        const decoded = decodeURIComponent(atob(encoded));
+      let encoded = encryptedString.replace('LARGE_CONTENT:', '');
+      const originalEncoded = encoded;
+
+      // Robust decoding strategy to tolerate double URI encoding, url-safe base64, missing padding, stray characters
+      const attemptDecode = (): string | null => {
+        let base = encoded.trim();
+        if (!base) return '';
+        try {
+          // If percent-encoded (contains %XX sequences), decode once to restore raw base64
+            if (/%[0-9A-Fa-f]{2}/.test(base)) {
+              try { base = decodeURIComponent(base); } catch {}
+            }
+          // Convert URL-safe variants
+          base = base.replace(/-/g, '+').replace(/_/g, '/');
+          // Strip anything not base64 set
+          base = base.replace(/[^A-Za-z0-9+/=]/g, '');
+          // Fix padding (length must be multiple of 4)
+          if (base.length % 4 !== 0) {
+            base = base.padEnd(base.length + (4 - (base.length % 4)), '=');
+          }
+          const bin = atob(base);
+          // Try URI component decode (we encoded with encodeURIComponent originally)
+          try {
+            return decodeURIComponent(bin);
+          } catch {
+            return bin; // return raw if not URI encoded
+          }
+        } catch (e) {
+          return null;
+        }
+      };
+
+      const maybeUriDecode = (s: string): string => {
+        if (/%3C/i.test(s) && !/<[a-z!/]/i.test(s)) {
+          try {
+            const dec = decodeURIComponent(s);
+            if (/<[a-z!/]/i.test(dec)) return dec;
+          } catch {/* ignore */}
+        }
+        return s;
+      };
+
+      const primary = attemptDecode();
+      if (primary !== null) {
         debug.log('Successfully decoded large content');
-        return decoded;
-      } catch (error) {
-        debug.error('Failed to decode large content (attempting salvage preview):', error);
+        return maybeUriDecode(primary);
+      }
+
+      debug.error('Failed to decode large content (attempting salvage preview):', { problematicSample: originalEncoded.slice(0, 80) });
         // Salvage strategy: clean and trim base64 so atob can parse a prefix
         // 1. Remove non-base64 chars
-        let cleaned = encoded.replace(/[^A-Za-z0-9+/=]/g, '');
+        let cleaned = originalEncoded.replace(/[^A-Za-z0-9+/=]/g, '');
         // 2. Trim to multiple of 4 length
         if (cleaned.length > 8) {
           cleaned = cleaned.slice(0, cleaned.length - (cleaned.length % 4));
@@ -285,11 +327,11 @@ export function useVetKeys() {
           // Collapse multiple blank lines
           cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
           const clipped = cleaned.length > 500 ? cleaned.slice(0, 500).trimEnd() + '… [preview truncated]' : cleaned;
-          return clipped.length > 0 ? clipped : '[Large content truncated - open entry to view]';
+          const finalPreview = clipped.length > 0 ? clipped : '[Large content truncated - open entry to view]';
+          return maybeUriDecode(finalPreview);
         }
         return '[Large content truncated - open entry to view]';
       }
-    }
     
     try {
       const keys = await initializeVetKeys();
@@ -324,7 +366,14 @@ export function useVetKeys() {
         
         // Use this as a symmetric key for AES decryption
         const crypto = new TempCrypto(userKey);
-        const decryptedMessage = crypto.decrypt(encryptedString);
+        let decryptedMessage = crypto.decrypt(encryptedString);
+        // Decode percent-encoded HTML if present
+        if (/%3C/i.test(decryptedMessage) && !/<[a-z!/]/i.test(decryptedMessage)) {
+          try {
+            const dec = decodeURIComponent(decryptedMessage);
+            if (/<[a-z!/]/i.test(dec)) decryptedMessage = dec;
+          } catch {/* ignore */}
+        }
         
         debug.log('Successfully decrypted with deterministic user key');
         return decryptedMessage;
@@ -337,7 +386,14 @@ export function useVetKeys() {
     debug.warn('Using temporary decryption (not secure)');
     const tempKey = new TextEncoder().encode('temp_encryption_key_123456789');
     const crypto = new TempCrypto(tempKey);
-    return crypto.decrypt(encryptedString);
+    let fallback = crypto.decrypt(encryptedString);
+    if (/%3C/i.test(fallback) && !/<[a-z!/]/i.test(fallback)) {
+      try {
+        const dec = decodeURIComponent(fallback);
+        if (/<[a-z!/]/i.test(dec)) fallback = dec;
+      } catch {/* ignore */}
+    }
+    return fallback;
   }, [initializeVetKeys, useRealVetKeys, actor]);
 
   return {

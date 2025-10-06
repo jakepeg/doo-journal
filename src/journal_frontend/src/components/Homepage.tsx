@@ -45,6 +45,16 @@ export default function Homepage() {
         return { text: '[Large entry – open to view full content]', truncated: true };
       }
 
+      // NEW: If content is percent-encoded (e.g. "%3Cp%3E") but not yet decoded, attempt a safe decode once
+      if (!raw.includes('<') && /%3C/i.test(raw)) {
+        try {
+          const decodedOnce = decodeURIComponent(raw);
+          if (decodedOnce.includes('<')) {
+            raw = decodedOnce;
+          }
+        } catch {/* ignore decode errors */}
+      }
+
       const originalLength = raw.length;
       let working = originalLength > 30_000 ? raw.slice(0, 30_000) : raw;
       const hadLargeToken = /LARGE_CONTENT:[A-Za-z0-9+/=\-%]+/.test(working);
