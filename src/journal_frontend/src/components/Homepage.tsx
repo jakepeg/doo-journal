@@ -8,7 +8,25 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { Plus, Lock, Globe, Edit, Trash2, Share2 } from 'lucide-react';
-import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense, memo } from 'react';
+
+// Memoized entry preview to prevent layout shifts from text processing
+const EntryPreview = memo(({ entry, buildPreview }: { 
+  entry: DecryptedJournalEntry; 
+  buildPreview: (content: string, maxLen?: number) => { text: string; truncated: boolean }; 
+}) => {
+  const preview = useMemo(() => buildPreview(entry.content), [entry.content, buildPreview]);
+  
+  return (
+    <>
+      <p className="text-gray-700 leading-relaxed line-clamp-3 whitespace-pre-wrap break-words min-h-[72px]">
+        {preview.text}
+      </p>
+      <p className="text-purple-600 text-sm mt-2 font-medium">Click to read more...</p>
+    </>
+  );
+});
+
 // Lazy-loaded heavy components to reduce initial bundle size
 const JournalEntryModal = lazy(() => import('./JournalEntryModal'));
 const ProfileEditModal = lazy(() => import('./ProfileEditModal'));
@@ -203,10 +221,53 @@ export default function Homepage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
-        <div className="flex items-center justify-center flex-1">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading your journal...</p>
+        <div className="container mx-auto px-4 max-w-[1024px] flex-1 pb-8 min-h-[600px]">
+          {/* Profile Section Skeleton */}
+          <Card className="pt-0 mt-8 mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
+            <div className="relative">
+              <div className="h-48 bg-gradient-to-r from-purple-400 to-blue-400 relative overflow-hidden">
+                <div className="absolute left-6 -bottom-12">
+                  <div className="w-24 h-24 border-4 border-white shadow-lg rounded-full bg-gray-200 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+            <CardContent className="px-6 pt-6">
+              <div className="h-8 bg-gray-200 rounded animate-pulse mb-2 w-48"></div>
+              <div className="h-4 bg-gray-200 rounded animate-pulse mb-4 w-64"></div>
+              <div className="flex space-x-4">
+                <div className="h-4 bg-gray-200 rounded animate-pulse w-24"></div>
+                <div className="h-4 bg-gray-200 rounded animate-pulse w-20"></div>
+                <div className="h-4 bg-gray-200 rounded animate-pulse w-20"></div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Entries Section Skeleton */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="h-8 bg-gray-200 rounded animate-pulse w-48"></div>
+            <div className="flex space-x-2">
+              <div className="h-9 bg-gray-200 rounded animate-pulse w-20"></div>
+              <div className="h-9 bg-gray-200 rounded animate-pulse min-w-[80px]"></div>
+            </div>
+          </div>
+
+          <div className="space-y-6 mb-8 min-h-[200px]">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+                <CardHeader className="pb-1">
+                  <div className="h-6 bg-gray-200 rounded animate-pulse mb-2 w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded animate-pulse w-32"></div>
+                </CardHeader>
+                <CardContent className="pt-1 min-h-[120px]">
+                  <div className="min-h-[72px] space-y-2">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse w-full"></div>
+                    <div className="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
+                    <div className="h-4 bg-gray-200 rounded animate-pulse w-4/6"></div>
+                  </div>
+                  <div className="h-4 bg-gray-200 rounded animate-pulse w-32 mt-2"></div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </div>
@@ -393,25 +454,13 @@ export default function Homepage() {
                       </div>
                     </div>
                   </CardHeader>
-<CardContent className="pt-1">
-  <div className="flex gap-4">
-    <div className="flex-1 min-w-0">
-      {(() => {
-        const preview = buildPreview(entry.content);
-        return (
-          <>
-            <p className="text-gray-700 leading-relaxed line-clamp-3 whitespace-pre-wrap break-words">
-              {preview.text}
-            </p>
-            <p className="text-purple-600 text-sm mt-2 font-medium">Click to read more...</p>
-          </>
-        );
-      })()}
-    </div>
-  </div>
-</CardContent>
-
-                </Card>
+                <CardContent className="pt-1 min-h-[120px]">
+                  <div className="flex gap-4">
+                    <div className="flex-1 min-w-0">
+                      <EntryPreview entry={entry} buildPreview={buildPreview} />
+                    </div>
+                  </div>
+                </CardContent>                </Card>
               ))}
             </div>
             
