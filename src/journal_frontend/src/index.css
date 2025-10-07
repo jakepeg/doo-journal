@@ -1,5 +1,4 @@
-/* Google font: Fredoka - Updated for CSP compliance */
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap');
+/* Using native system fonts for optimal performance - no external requests */
 
 @import "tailwindcss/preflight";
 @import "tailwindcss/theme" layer(theme);
