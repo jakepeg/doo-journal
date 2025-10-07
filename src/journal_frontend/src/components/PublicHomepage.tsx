@@ -9,6 +9,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useActor } from '../hooks/useActor';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
 
 interface PublicHomepageProps {
   user: Principal;
@@ -21,6 +22,8 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
   const [profileImageError, setProfileImageError] = useState(false);
   const { actor } = useActor();
   const navigate = useNavigate();
+  const { identity } = useInternetIdentity();
+  const isAuthenticated = !!identity;
 
   // Decode large content for public entries (no encryption, just base64 + percent encoding)
   const decodeLargeContent = useCallback((encoded: string): string => {
@@ -191,13 +194,15 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
               <Share2 className="w-4 h-4 mr-2" />
               Share
             </Button>
-            <Button
-              onClick={handleStartJournal}
-              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Start Your Own Journal
-            </Button>
+            {!isAuthenticated && (
+              <Button
+                onClick={handleStartJournal}
+                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Start Your Own Journal
+              </Button>
+            )}
           </div>
         </div>
         
@@ -231,13 +236,15 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
             <Share2 className="w-4 h-4 mr-2" />
             Share
           </Button>
-          <Button
-            onClick={handleStartJournal}
-            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            Start Your Own Journal
-          </Button>
+          {!isAuthenticated && (
+            <Button
+              onClick={handleStartJournal}
+              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Start Your Own Journal
+            </Button>
+          )}
         </div>
       </div>
 
@@ -307,13 +314,15 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
               <p className="text-gray-600 mb-6">
                 This writer hasn't shared any journal entries yet. Check back later!
               </p>
-              <Button
-                onClick={handleStartJournal}
-                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Start Your Own Journal
-              </Button>
+              {!isAuthenticated && (
+                <Button
+                  onClick={handleStartJournal}
+                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Start Your Own Journal
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (

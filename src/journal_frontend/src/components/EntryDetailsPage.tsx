@@ -259,13 +259,15 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
                 Share
               </Button>
             )}
-            <Button
-              onClick={handleStartJournal}
-              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Start Your Own Journal
-            </Button>
+            {!isAuthenticated && (
+              <Button
+                onClick={handleStartJournal}
+                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Start Your Own Journal
+              </Button>
+            )}
           </div>
         </div>
       )}
