@@ -8,11 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { Plus, Lock, Globe, Edit, Trash2, Share2 } from 'lucide-react';
-import JournalEntryModal from './JournalEntryModal';
-import ProfileEditModal from './ProfileEditModal';
-import ProfileSetupModal from './ProfileSetupModal';
-import EncryptionDebugPanel from './EncryptionDebugPanel';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+// Lazy-loaded heavy components to reduce initial bundle size
+const JournalEntryModal = lazy(() => import('./JournalEntryModal'));
+const ProfileEditModal = lazy(() => import('./ProfileEditModal'));
+const ProfileSetupModal = lazy(() => import('./ProfileSetupModal'));
+const EncryptionDebugPanel = lazy(() => import('./EncryptionDebugPanel'));
 import { toast } from 'sonner';
 
 export default function Homepage() {
@@ -410,32 +411,42 @@ export default function Homepage() {
             </div>
             
             {/* Add debug panel in development */}
-            {import.meta.env.DEV && <EncryptionDebugPanel />}
+            {import.meta.env.DEV && (
+              <Suspense fallback={null}>
+                <EncryptionDebugPanel />
+              </Suspense>
+            )}
           </>
         )}
       </div>
 
       {/* Modals */}
       {showEntryModal && (
-        <JournalEntryModal
-          entry={editingEntry}
-          onClose={() => {
-            setShowEntryModal(false);
-            setEditingEntry(null);
-          }}
-        />
+        <Suspense fallback={null}>
+          <JournalEntryModal
+            entry={editingEntry}
+            onClose={() => {
+              setShowEntryModal(false);
+              setEditingEntry(null);
+            }}
+          />
+        </Suspense>
       )}
 
       {showProfileModal && (
-        <ProfileEditModal
-          onClose={() => setShowProfileModal(false)}
-        />
+        <Suspense fallback={null}>
+          <ProfileEditModal
+            onClose={() => setShowProfileModal(false)}
+          />
+        </Suspense>
       )}
 
       {showProfileSetupModal && (
-        <ProfileSetupModal
-          onClose={() => setShowProfileSetupModal(false)}
-        />
+        <Suspense fallback={null}>
+          <ProfileSetupModal
+            onClose={() => setShowProfileSetupModal(false)}
+          />
+        </Suspense>
       )}
     </div>
   );
