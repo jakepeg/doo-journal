@@ -70,6 +70,13 @@
     font-size: 1.1em; /* keep marker proportional */
   }
 
+  /* Center images in Quill editor */
+  .ql-editor img {
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
   .entry-content ul,
   .entry-content ol {
     padding-left: 1.4rem; /* Ensure proper indentation */
@@ -78,6 +85,36 @@
 
   .entry-content li + li {
     margin-top: 0.35rem;
+  }
+
+  /* Center images in entry content */
+  .entry-content img,
+  [data-tanstack-router-outlet] img,
+  .prose img {
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    text-align: center !important;
+  }
+
+  /* Additional specificity for image centering */
+  div.entry-content img {
+    display: block !important;
+    margin: 1rem auto !important;
+  }
+
+  /* Global image centering fallback */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Specifically target content images */
+  .entry-content > div img,
+  .entry-content p img {
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
 
   button {

@@ -129,7 +129,7 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
     let html = content
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg my-4 shadow-md" crossorigin="anonymous" />')
+      .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="block mx-auto w-auto max-w-full h-auto rounded-lg my-4 shadow-md" crossorigin="anonymous" style="margin-left: auto; margin-right: auto; display: block;" />')
       .replace(/^- (.+)$/gm, '<li>$1</li>')
       .replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-purple-300 pl-4 italic text-gray-600 my-2">$1</blockquote>')
       .replace(/\n/g, '<br />');
