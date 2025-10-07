@@ -46,10 +46,11 @@ export default function Homepage() {
       }
 
       // NEW: If content is percent-encoded (e.g. "%3Cp%3E") but not yet decoded, attempt a safe decode once
-      if (!raw.includes('<') && /%3C/i.test(raw)) {
+      if (/%[0-9A-Fa-f]{2}/.test(raw)) {
         try {
           const decodedOnce = decodeURIComponent(raw);
-          if (decodedOnce.includes('<')) {
+          // Only use decoded version if it's different and seems to contain HTML
+          if (decodedOnce !== raw && (decodedOnce.includes('<') || decodedOnce.includes('&'))) {
             raw = decodedOnce;
           }
         } catch {/* ignore decode errors */}

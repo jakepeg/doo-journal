@@ -106,29 +106,81 @@ export function useGetOwnHomepage() {
             contentLength: entry.content?.length || 0
           });
 
-          // All entries are now encrypted using deterministic encryption
-          try {
-            // Content is stored as encrypted string
-            const decryptedContent = await decryptContent(entry.content);
-            
-            debug.log(`Successfully decrypted entry ${index + 1}:`, {
-              originalLength: entry.content.length,
-              decryptedLength: decryptedContent.length,
-              preview: decryptedContent.substring(0, 50) + '...'
+          // Only decrypt private entries - public entries are stored as plain text
+          if (entry.isPublic) {
+            debug.log(`Processing public entry ${index + 1}:`, {
+              title: entry.title,
+              contentLength: entry.content.length,
+              hasLargeMarker: entry.content.startsWith('LARGE_CONTENT:')
             });
             
+            let publicContent = entry.content;
+            
+            // Handle large content markers in public entries (they still need base64 decoding)
+            if (publicContent.startsWith('LARGE_CONTENT:')) {
+              try {
+                const encoded = publicContent.replace('LARGE_CONTENT:', '');
+                let base = encoded.trim();
+                
+                // If percent-encoded, decode once
+                if (/%[0-9A-Fa-f]{2}/.test(base)) {
+                  try { base = decodeURIComponent(base); } catch {}
+                }
+                
+                // Convert URL-safe variants and clean
+                base = base.replace(/-/g, '+').replace(/_/g, '/').replace(/[^A-Za-z0-9+/=]/g, '');
+                
+                // Fix padding
+                if (base.length % 4 !== 0) {
+                  base = base.padEnd(base.length + (4 - (base.length % 4)), '=');
+                }
+                
+                // Decode base64
+                const bin = atob(base);
+                
+                // Try URI component decode
+                try {
+                  publicContent = decodeURIComponent(bin);
+                } catch {
+                  publicContent = bin;
+                }
+                
+                debug.log(`Decoded large public content for entry ${index + 1}`);
+              } catch (error) {
+                debug.warn(`Failed to decode large public content for entry ${index + 1}:`, error);
+                // Keep original content if decoding fails
+              }
+            }
+            
             return {
               ...entry,
-              content: decryptedContent,
-              _originalContent: entry.content,
+              content: publicContent,
+              _originalContent: undefined, // No original content for public entries
             };
-          } catch (error) {
-            debug.error(`Failed to decrypt entry ${index + 1} (${entry.title}):`, error);
-            return {
-              ...entry,
-              content: '[Decryption failed]',
-              _originalContent: entry.content,
-            };
+          } else {
+            // Private entries are encrypted and need decryption
+            try {
+              const decryptedContent = await decryptContent(entry.content);
+              
+              debug.log(`Successfully decrypted private entry ${index + 1}:`, {
+                originalLength: entry.content.length,
+                decryptedLength: decryptedContent.length,
+                preview: decryptedContent.substring(0, 50) + '...'
+              });
+              
+              return {
+                ...entry,
+                content: decryptedContent,
+                _originalContent: entry.content,
+              };
+            } catch (error) {
+              debug.error(`Failed to decrypt entry ${index + 1} (${entry.title}):`, error);
+              return {
+                ...entry,
+                content: '[Decryption failed]',
+                _originalContent: entry.content,
+              };
+            }
           }
         })
       );
@@ -260,20 +312,30 @@ export function useCreateJournalEntry() {
     }) => {
       if (!actor) throw new Error('Actor not available');
 
-      // All entries are now encrypted for consistency
-      debug.log('Encrypting entry:', {
-        title,
-        isPublic,
-        originalContent: content.substring(0, 50) + '...',
-        originalLength: content.length
-      });
-      
-      const processedContent = await encryptContent(content);
-      
-      debug.log('Entry encrypted:', {
-        title,
-        encryptedLength: processedContent.length
-      });
+      // Only encrypt private entries - public entries are stored as plain text
+      let processedContent: string;
+      if (isPublic) {
+        debug.log('Storing public entry as plain text:', {
+          title,
+          isPublic,
+          originalLength: content.length
+        });
+        processedContent = content; // Store public entries as plain text
+      } else {
+        debug.log('Encrypting private entry:', {
+          title,
+          isPublic,
+          originalContent: content.substring(0, 50) + '...',
+          originalLength: content.length
+        });
+        
+        processedContent = await encryptContent(content);
+        
+        debug.log('Private entry encrypted:', {
+          title,
+          encryptedLength: processedContent.length
+        });
+      }
 
       const result = await actor.createJournalEntry(
         title,
@@ -371,15 +433,32 @@ export function useUpdateJournalEntry() {
     }) => {
       if (!actor) throw new Error('Actor not available');
 
-      // All entries are now encrypted for consistency
-      const processedContent = await encryptContent(content);
-
-      console.log('[DEBUG] Updating entry:', {
-        entryId,
-        title,
-        contentLength: processedContent.length,
-        isPublic
-      });
+      // Only encrypt private entries - public entries are stored as plain text  
+      let processedContent: string;
+      if (isPublic) {
+        console.log('[DEBUG] Updating public entry as plain text:', {
+          entryId,
+          title,
+          contentLength: content.length,
+          isPublic
+        });
+        processedContent = content; // Store public entries as plain text
+      } else {
+        console.log('[DEBUG] Encrypting private entry:', {
+          entryId,
+          title,
+          originalLength: content.length,
+          isPublic
+        });
+        
+        processedContent = await encryptContent(content);
+        
+        console.log('[DEBUG] Private entry encrypted:', {
+          entryId,
+          title,
+          encryptedLength: processedContent.length
+        });
+      }
       
       return await actor.updateJournalEntry(
         entryId,

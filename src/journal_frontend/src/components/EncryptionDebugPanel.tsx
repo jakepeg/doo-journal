@@ -39,6 +39,15 @@ export default function EncryptionDebugPanel() {
                   
                   <div className="space-y-1 text-xs text-gray-600">
                     <div><strong>Content Preview:</strong> {entry.content.substring(0, 100)}...</div>
+                    
+                    {/* Check for percent-encoded content */}
+                    {/%[0-9A-Fa-f]{2}/.test(entry.content) && (
+                      <div className="p-2 bg-red-100 rounded border border-red-200">
+                        <strong className="text-red-700">⚠️ Percent-encoded content detected!</strong>
+                        <div className="mt-1">Sample: {entry.content.match(/%[0-9A-Fa-f]{2}[^%]*/)?.[0] || 'N/A'}</div>
+                      </div>
+                    )}
+                    
                     {!entry.isPublic && entry._originalContent && (
                       <>
                         <div><strong>Original Length:</strong> {entry._originalContent.length} bytes</div>

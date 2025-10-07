@@ -368,11 +368,14 @@ export function useVetKeys() {
         const crypto = new TempCrypto(userKey);
         let decryptedMessage = crypto.decrypt(encryptedString);
         // Decode percent-encoded HTML if present
-        if (/%3C/i.test(decryptedMessage) && !/<[a-z!/]/i.test(decryptedMessage)) {
+        if (/%[0-9A-Fa-f]{2}/.test(decryptedMessage)) {
           try {
             const dec = decodeURIComponent(decryptedMessage);
-            if (/<[a-z!/]/i.test(dec)) decryptedMessage = dec;
-          } catch {/* ignore */}
+            // Only use decoded version if it's different and seems to contain HTML
+            if (dec !== decryptedMessage && (dec.includes('<') || dec.includes('&'))) {
+              decryptedMessage = dec;
+            }
+          } catch {/* ignore decode errors */}
         }
         
         debug.log('Successfully decrypted with deterministic user key');
@@ -387,11 +390,14 @@ export function useVetKeys() {
     const tempKey = new TextEncoder().encode('temp_encryption_key_123456789');
     const crypto = new TempCrypto(tempKey);
     let fallback = crypto.decrypt(encryptedString);
-    if (/%3C/i.test(fallback) && !/<[a-z!/]/i.test(fallback)) {
+    if (/%[0-9A-Fa-f]{2}/.test(fallback)) {
       try {
         const dec = decodeURIComponent(fallback);
-        if (/<[a-z!/]/i.test(dec)) fallback = dec;
-      } catch {/* ignore */}
+        // Only use decoded version if it's different and seems to contain HTML
+        if (dec !== fallback && (dec.includes('<') || dec.includes('&'))) {
+          fallback = dec;
+        }
+      } catch {/* ignore decode errors */}
     }
     return fallback;
   }, [initializeVetKeys, useRealVetKeys, actor]);
