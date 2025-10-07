@@ -167,8 +167,8 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
     navigate({ to: '/entry/$userId/$entryId', params: { userId, entryId } });
   };
 
-  const formatDate = (timestamp: bigint) => {
-    return new Date(Number(timestamp) / 1000000).toLocaleDateString('en-US', {
+  const formatDate = (date: bigint) => {
+    return new Date(Number(date) / 1000000).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -318,7 +318,7 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
         ) : (
           <div className="space-y-6 mb-8">
             {entries
-              .sort((a, b) => Number(b.timestamp) - Number(a.timestamp))
+              .sort((a, b) => Number(b.date) - Number(a.date))
               .map((entry) => (
                 <Card 
                   key={entry.id}
@@ -333,7 +333,7 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
                         </CardTitle>
                         <div className="flex items-center space-x-3">
                           <span className="text-sm text-gray-500">
-                            {formatDate(entry.timestamp)}
+                            {formatDate(entry.date)}
                           </span>
                           <Badge variant="default" className="text-xs">
                             <Globe className="w-3 h-3 mr-1" />
