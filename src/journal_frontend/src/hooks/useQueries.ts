@@ -140,7 +140,14 @@ export function useGetOwnHomepage() {
                 
                 // Try URI component decode
                 try {
-                  publicContent = decodeURIComponent(bin);
+                  const decoded = decodeURIComponent(bin);
+                  // Extra safety: make sure we didn't corrupt image data URLs during decoding
+                  if (bin.includes('data:image/') && !decoded.includes('data:image/')) {
+                    debug.warn('Detected potential image corruption during URI decode, using raw binary');
+                    publicContent = bin;
+                  } else {
+                    publicContent = decoded;
+                  }
                 } catch {
                   publicContent = bin;
                 }
@@ -238,21 +245,71 @@ export function useGetJournalEntry(user: Principal, entryId: string) {
       
       if (!entry) return null;
 
-      // All entries are now encrypted using deterministic encryption
-      try {
-        const decryptedContent = await decryptContent(entry.content);
+      // Only decrypt private entries - public entries are stored as plain text
+      if (entry.isPublic) {
+        // Handle large content for public entries (same logic as PublicHomepage)
+        let content = entry.content;
+        if (content.startsWith('LARGE_CONTENT:')) {
+          const encoded = content.replace('LARGE_CONTENT:', '');
+          try {
+            let base = encoded.trim();
+            
+            // If percent-encoded, decode once to restore raw base64
+            if (/%[0-9A-Fa-f]{2}/.test(base)) {
+              try { base = decodeURIComponent(base); } catch {}
+            }
+            
+            // Convert URL-safe variants
+            base = base.replace(/-/g, '+').replace(/_/g, '/');
+            // Strip anything not base64 set
+            base = base.replace(/[^A-Za-z0-9+/=]/g, '');
+            // Fix padding (length must be multiple of 4)
+            if (base.length % 4 !== 0) {
+              base = base.padEnd(base.length + (4 - (base.length % 4)), '=');
+            }
+            
+            const bin = atob(base);
+            // Try URI component decode (content was encoded with encodeURIComponent)
+            try {
+              const decoded = decodeURIComponent(bin);
+              // Extra safety: make sure we didn't corrupt image data URLs during decoding
+              if (bin.includes('data:image/') && !decoded.includes('data:image/')) {
+                console.warn('Detected potential image corruption during URI decode, using raw binary');
+                content = bin;
+              } else {
+                content = decoded;
+              }
+            } catch {
+              content = bin; // return raw if not URI encoded
+            }
+          } catch (e) {
+            console.error('Failed to decode large public content:', e);
+            content = '[Content could not be decoded]';
+          }
+        }
+        
         return {
           ...entry,
-          content: decryptedContent,
-          _originalContent: entry.content,
+          content: content,
+          _originalContent: undefined,
         } as DecryptedJournalEntry;
-      } catch (error) {
-        console.error('Failed to decrypt entry:', error);
-        return {
-          ...entry,
-          content: '[Decryption failed]',
-          _originalContent: entry.content,
-        } as DecryptedJournalEntry;
+      } else {
+        // Private entries need decryption
+        try {
+          const decryptedContent = await decryptContent(entry.content);
+          return {
+            ...entry,
+            content: decryptedContent,
+            _originalContent: entry.content,
+          } as DecryptedJournalEntry;
+        } catch (error) {
+          console.error('Failed to decrypt private entry:', error);
+          return {
+            ...entry,
+            content: '[Decryption failed]',
+            _originalContent: entry.content,
+          } as DecryptedJournalEntry;
+        }
       }
     },
     enabled: !!actor && !!user && !!entryId,

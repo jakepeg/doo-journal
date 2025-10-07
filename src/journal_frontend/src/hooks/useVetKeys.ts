@@ -265,7 +265,14 @@ export function useVetKeys() {
           const bin = atob(base);
           // Try URI component decode (we encoded with encodeURIComponent originally)
           try {
-            return decodeURIComponent(bin);
+            const decoded = decodeURIComponent(bin);
+            // Extra safety: make sure we didn't corrupt image data URLs during decoding
+            // If the decoded content looks corrupted (lost image data structure), return the bin
+            if (bin.includes('data:image/') && !decoded.includes('data:image/')) {
+              debug.warn('Detected potential image corruption during URI decode, using raw binary');
+              return bin;
+            }
+            return decoded;
           } catch {
             return bin; // return raw if not URI encoded
           }
