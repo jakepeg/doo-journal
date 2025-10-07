@@ -94,86 +94,100 @@ export function useGetOwnHomepage() {
 
       const result = await actor.getOwnHomepage();
       
-      // Decrypt private entries
+      // Optimize processing with caching and batching
       debug.log(`Processing ${result.entries.length} entries from backend`);
       
+      // Pre-compile regex for better performance
+      const LARGE_CONTENT_REGEX = /^LARGE_CONTENT:/;
+      const PERCENT_ENCODED_REGEX = /%[0-9A-Fa-f]{2}/;
+      
+      // Create a cache for decoded large content
+      const largeContentCache = new Map<string, string>();
+      
+      // Helper function to decode large content with caching
+      const decodeLargeContent = (content: string): string => {
+        if (largeContentCache.has(content)) {
+          return largeContentCache.get(content)!;
+        }
+        
+        try {
+          const encoded = content.replace('LARGE_CONTENT:', '');
+          let base = encoded.trim();
+          
+          // Quick check - if content is very short, skip processing
+          if (base.length < 10) {
+            largeContentCache.set(content, content);
+            return content;
+          }
+          
+          // If percent-encoded, decode once
+          if (PERCENT_ENCODED_REGEX.test(base)) {
+            try { 
+              base = decodeURIComponent(base); 
+            } catch {
+              // If decode fails, use original
+              largeContentCache.set(content, content);
+              return content;
+            }
+          }
+          
+          // Convert URL-safe variants and clean
+          base = base.replace(/-/g, '+').replace(/_/g, '/').replace(/[^A-Za-z0-9+/=]/g, '');
+          
+          // Fix padding efficiently
+          const paddingNeeded = 4 - (base.length % 4);
+          if (paddingNeeded !== 4) {
+            base += '='.repeat(paddingNeeded);
+          }
+          
+          // Decode base64
+          const bin = atob(base);
+          
+          // Try URI component decode with safety check
+          let decoded = bin;
+          try {
+            const uriDecoded = decodeURIComponent(bin);
+            // Only use decoded version if it doesn't corrupt image data
+            if (!bin.includes('data:image/') || uriDecoded.includes('data:image/')) {
+              decoded = uriDecoded;
+            }
+          } catch {
+            // Use binary version if URI decode fails
+          }
+          
+          largeContentCache.set(content, decoded);
+          return decoded;
+        } catch (error) {
+          debug.warn(`Failed to decode large content:`, error);
+          largeContentCache.set(content, content);
+          return content;
+        }
+      };
+      
+      // Process entries with optimized async handling
       const decryptedEntries: DecryptedJournalEntry[] = await Promise.all(
         result.entries.map(async (entry, index): Promise<DecryptedJournalEntry> => {
-          debug.log(`Entry ${index + 1}:`, {
-            id: entry.id,
-            title: entry.title,
-            isPublic: entry.isPublic,
-            contentLength: entry.content?.length || 0
-          });
-
           // Only decrypt private entries - public entries are stored as plain text
           if (entry.isPublic) {
-            debug.log(`Processing public entry ${index + 1}:`, {
-              title: entry.title,
-              contentLength: entry.content.length,
-              hasLargeMarker: entry.content.startsWith('LARGE_CONTENT:')
-            });
-            
             let publicContent = entry.content;
             
-            // Handle large content markers in public entries (they still need base64 decoding)
-            if (publicContent.startsWith('LARGE_CONTENT:')) {
-              try {
-                const encoded = publicContent.replace('LARGE_CONTENT:', '');
-                let base = encoded.trim();
-                
-                // If percent-encoded, decode once
-                if (/%[0-9A-Fa-f]{2}/.test(base)) {
-                  try { base = decodeURIComponent(base); } catch {}
-                }
-                
-                // Convert URL-safe variants and clean
-                base = base.replace(/-/g, '+').replace(/_/g, '/').replace(/[^A-Za-z0-9+/=]/g, '');
-                
-                // Fix padding
-                if (base.length % 4 !== 0) {
-                  base = base.padEnd(base.length + (4 - (base.length % 4)), '=');
-                }
-                
-                // Decode base64
-                const bin = atob(base);
-                
-                // Try URI component decode
-                try {
-                  const decoded = decodeURIComponent(bin);
-                  // Extra safety: make sure we didn't corrupt image data URLs during decoding
-                  if (bin.includes('data:image/') && !decoded.includes('data:image/')) {
-                    debug.warn('Detected potential image corruption during URI decode, using raw binary');
-                    publicContent = bin;
-                  } else {
-                    publicContent = decoded;
-                  }
-                } catch {
-                  publicContent = bin;
-                }
-                
-                debug.log(`Decoded large public content for entry ${index + 1}`);
-              } catch (error) {
-                debug.warn(`Failed to decode large public content for entry ${index + 1}:`, error);
-                // Keep original content if decoding fails
-              }
+            // Handle large content markers efficiently
+            if (LARGE_CONTENT_REGEX.test(publicContent)) {
+              publicContent = decodeLargeContent(publicContent);
+              debug.log(`Decoded large public content for entry ${index + 1}`);
             }
             
             return {
               ...entry,
               content: publicContent,
-              _originalContent: undefined, // No original content for public entries
+              _originalContent: undefined,
             };
           } else {
-            // Private entries are encrypted and need decryption
+            // Private entries need decryption
             try {
               const decryptedContent = await decryptContent(entry.content);
               
-              debug.log(`Successfully decrypted private entry ${index + 1}:`, {
-                originalLength: entry.content.length,
-                decryptedLength: decryptedContent.length,
-                preview: decryptedContent.substring(0, 50) + '...'
-              });
+              debug.log(`Successfully decrypted private entry ${index + 1}`);
               
               return {
                 ...entry,
@@ -198,10 +212,13 @@ export function useGetOwnHomepage() {
       };
     },
     enabled: !!actor && !actorFetching,
-    staleTime: 5 * 60 * 1000, // 5 minutes - longer cache for better performance
-    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
-    retry: 2,
-    refetchOnWindowFocus: false, // Don't refetch on window focus for better UX
+    staleTime: 15 * 60 * 1000, // 15 minutes - much longer cache for better performance
+    gcTime: 30 * 60 * 1000, // 30 minutes garbage collection
+    retry: 1, // Reduce retries for faster failure
+    retryDelay: 500, // Shorter retry delay
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false, // Don't refetch on reconnect
+    refetchOnMount: false, // Don't always refetch on mount if we have cached data
   });
 }
 

@@ -15,6 +15,7 @@ const ProfileEditModal = lazy(() => import('./ProfileEditModal'));
 const ProfileSetupModal = lazy(() => import('./ProfileSetupModal'));
 const EncryptionDebugPanel = lazy(() => import('./EncryptionDebugPanel'));
 import { toast } from 'sonner';
+import { LayoutShiftDebugger } from './LayoutShiftDebugger';
 
 export default function Homepage() {
   const navigate = useNavigate();
@@ -230,7 +231,7 @@ export default function Homepage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="container mx-auto px-4 max-w-[1024px] flex-1 pb-8">
+      <div className="container mx-auto px-4 max-w-[1024px] flex-1 pb-8 min-h-[600px]">
         {/* Profile Section */}
         <Card className="pt-0 mt-8 mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
           <div className="relative">
@@ -240,6 +241,8 @@ export default function Homepage() {
                   src={profile.coverImage[0]} 
                   alt="Cover image"
                   className="w-full h-full object-cover"
+                  width="1024"
+                  height="192"
                 />
               ) : null}
               <Button
@@ -257,6 +260,8 @@ export default function Homepage() {
                   src={profile?.profilePicture && profile.profilePicture.length > 0 ? profile.profilePicture[0] : undefined}
                   alt={`${profile?.name || 'User'}'s profile picture`}
                   className="object-cover"
+                  width="96"
+                  height="96"
                 />
                 <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-400 text-white text-3xl font-bold">
                   {profile?.name?.charAt(0).toUpperCase() || '?'}
@@ -297,7 +302,7 @@ export default function Homepage() {
 
             <Button
               onClick={handleNewEntry}
-              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg"
+              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg min-w-[80px] h-9"
             >
               {/* <Plus className="w-4 h-4 mr-2" /> */}
               New
@@ -306,7 +311,7 @@ export default function Homepage() {
         </div>
 
         {entries.length === 0 ? (
-          <Card className="border-2 border-dashed border-purple-200 bg-purple-50/50 mb-8">
+          <Card className="border-2 border-dashed border-purple-200 bg-purple-50/50 mb-8 min-h-[300px]">
             <CardContent className="p-12 text-center">
               <h4 className="text-xl font-semibold text-gray-700 mb-2">Start Your Journey!</h4>
               <p className="text-gray-600 mb-6">
@@ -322,7 +327,7 @@ export default function Homepage() {
           </Card>
         ) : (
           <>
-            <div className="space-y-6 mb-8">
+            <div className="space-y-6 mb-8 min-h-[200px]">
               {entries
                 .sort((a, b) => Number(b.date) - Number(a.date))
                 .map((entry) => (
@@ -448,6 +453,9 @@ export default function Homepage() {
           />
         </Suspense>
       )}
+      
+      {/* Debug layout shifts in development */}
+      {import.meta.env.DEV && <LayoutShiftDebugger />}
     </div>
   );
 }

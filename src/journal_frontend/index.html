@@ -11,6 +11,83 @@
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#8b5cf6" />
 
+  <!-- Font preloading to reduce CLS -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <style>
+    /* Critical CSS to prevent font loading shifts */
+    * {
+      font-display: swap;
+    }
+    
+    /* Reserve space for main content areas to prevent CLS */
+    .min-h-screen {
+      min-height: 100vh;
+    }
+    
+    /* Prevent avatar and button loading shifts */
+    [data-avatar-container] {
+      width: 96px;
+      height: 96px;
+      display: block;
+    }
+    
+    /* Skeleton for loading states */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+    }
+    
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    
+    /* Image loading optimization to prevent CLS */
+    img {
+      display: block;
+    }
+    
+    /* Prevent button reflow and layout shifts */
+    button {
+      min-width: fit-content;
+      box-sizing: border-box;
+    }
+    
+    /* Container stability */
+    .container {
+      contain: layout style;
+    }
+    
+    img[width][height] {
+      height: auto;
+    }
+    
+    /* Avatar specific styles */
+    .avatar-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    /* Card layout stability */
+    .entry-card {
+      contain: layout style;
+    }
+    
+    /* Prevent button layout shifts */
+    button {
+      contain: layout style;
+    }
+    
+    /* Text content stability */
+    .content-text {
+      line-height: 1.6;
+      min-height: 1.6em;
+    }
+  </style>
+
   <!-- iOS Safari PWA Support -->
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
