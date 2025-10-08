@@ -44,4 +44,20 @@ module {
     let pathMap = OrderedMap.Make<Text>(Text.compare);
     registry.references := pathMap.remove(registry.references, path).0;
   };
+
+  // Upgrade support functions
+  public func toStableFormat(registry : Registry) : [(Text, FileReference)] {
+    let pathMap = OrderedMap.Make<Text>(Text.compare);
+    Iter.toArray(pathMap.entries(registry.references));
+  };
+
+  public func fromStableFormat(registry : Registry, stableData : [(Text, FileReference)]) {
+    let pathMap = OrderedMap.Make<Text>(Text.compare);
+    registry.references := pathMap.fromIter<FileReference>(stableData.vals());
+  };
+
+  public func size(registry : Registry) : Nat {
+    let pathMap = OrderedMap.Make<Text>(Text.compare);
+    pathMap.size(registry.references);
+  };
 };

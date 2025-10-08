@@ -1,6 +1,8 @@
 import OrderedMap "mo:base/OrderedMap";
 import Principal "mo:base/Principal";
 import Debug "mo:base/Debug";
+import Iter "mo:base/Iter";
+import Array "mo:base/Array";
 
 module {
   public type UserRole = {
@@ -78,5 +80,22 @@ module {
 
   public func isAdmin(state : AccessControlState, caller : Principal) : Bool {
     getUserRole(state, caller) == #admin;
+  };
+
+  // Upgrade support functions
+  public func getEntries(state : AccessControlState) : Iter.Iter<(Principal, UserRole)> {
+    let principalMap = OrderedMap.Make<Principal>(Principal.compare);
+    principalMap.entries(state.userRoles);
+  };
+
+  public func fromStableEntries(state : AccessControlState, stableData : [(Principal, UserRole)]) {
+    let principalMap = OrderedMap.Make<Principal>(Principal.compare);
+    state.userRoles := principalMap.fromIter<UserRole>(stableData.vals());
+
+    // Check if admin was assigned
+    state.adminAssigned := Array.find<(Principal, UserRole)>(
+      stableData,
+      func((_, role)) = role == #admin,
+    ) != null;
   };
 };

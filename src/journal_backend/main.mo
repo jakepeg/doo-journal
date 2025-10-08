@@ -9,8 +9,10 @@ import Array "mo:base/Array";
 import Timer "mo:base/Timer";
 import HashMap "mo:base/HashMap";
 import Int "mo:base/Int";
+import Nat "mo:base/Nat";
 import Nat8 "mo:base/Nat8";
 import Blob "mo:base/Blob";
+import Iter "mo:base/Iter";
 
 persistent actor Journal {
   // Principal-OrderedMap specialization
@@ -181,9 +183,13 @@ persistent actor Journal {
     imagePath : ?Text;
   };
 
-  // Stable state
+  // Stable state - persists through canister upgrades
   var userProfiles : PrincipalMap<UserProfile> = PrincipalMapOps.empty<UserProfile>();
   var journalEntries : PrincipalMap<[JournalEntry]> = PrincipalMapOps.empty<[JournalEntry]>();
+
+  // Stable storage for transient state (for upgrade preservation)
+  var accessControlStable : [(Principal, AccessControl.UserRole)] = [];
+  var registryStable : [(Text, Registry.FileReference)] = [];
 
   // Migration: Handle deprecated KEY_NAME stable variable (unused but keeps compatibility)
   var _deprecatedKeyName : ?Text = null;
@@ -646,6 +652,31 @@ persistent actor Journal {
     };
   };
 
+  // System health monitoring for upgrade verification
+  public query func getSystemHealth() : async {
+    totalUsers : Nat;
+    totalEntries : Nat;
+    totalFiles : Nat;
+    accessControlUsers : Nat;
+  } {
+    let entryCount = Array.foldLeft<(Principal, [JournalEntry]), Nat>(
+      Iter.toArray(PrincipalMapOps.entries(journalEntries)),
+      0,
+      func(acc, (_, entries)) = acc + entries.size(),
+    );
+
+    {
+      totalUsers = PrincipalMapOps.size(userProfiles);
+      totalEntries = entryCount;
+      totalFiles = Registry.size(registry);
+      accessControlUsers = Array.foldLeft<(Principal, AccessControl.UserRole), Nat>(
+        Iter.toArray(AccessControl.getEntries(accessControlState)),
+        0,
+        func(acc, _) = acc + 1,
+      );
+    };
+  };
+
   // Initialize timers (called after deployment)
   public func initializeNotificationTimers() : async () {
     // Set up recurring timer to check every hour
@@ -657,13 +688,45 @@ persistent actor Journal {
 
   // System functions for canister lifecycle
   system func preupgrade() {
+    Debug.print("🔄 [Pre-upgrade] Preserving user data...");
+
+    // Cancel timers
     switch (notificationTimers) {
       case (?timerId) { Timer.cancelTimer(timerId) };
       case null {};
     };
+
+    // Preserve transient state to stable storage
+    accessControlStable := Iter.toArray(AccessControl.getEntries(accessControlState));
+    registryStable := Registry.toStableFormat(registry);
+
+    // Log preservation stats
+    let userCount = PrincipalMapOps.size(userProfiles);
+    let entryCount = Array.foldLeft<(Principal, [JournalEntry]), Nat>(
+      Iter.toArray(PrincipalMapOps.entries(journalEntries)),
+      0,
+      func(acc, (_, entries)) = acc + entries.size(),
+    );
+
+    Debug.print(
+      "✅ [Pre-upgrade] Preserved " # Nat.toText(userCount) # " users, " #
+      Nat.toText(entryCount) # " entries, " # Nat.toText(registryStable.size()) # " files"
+    );
   };
 
   system func postupgrade() {
+    Debug.print("🔄 [Post-upgrade] Restoring user data...");
+
+    // Restore transient state from stable storage
+    AccessControl.fromStableEntries(accessControlState, accessControlStable);
+    Registry.fromStableFormat(registry, registryStable);
+
+    // Clear temporary stable data after restoration
+    accessControlStable := [];
+    registryStable := [];
+
+    Debug.print("✅ [Post-upgrade] Data restoration complete");
+
     // Recreate timers after upgrade
     ignore Timer.setTimer<system>(
       #seconds(1),
