@@ -579,6 +579,73 @@ persistent actor Journal {
     };
   };
 
+  // Debug function to get current time info
+  public query func getDebugTimeInfo() : async {
+    currentHour : Nat8;
+    currentDay : Nat8;
+    currentTimestamp : Int;
+  } {
+    {
+      currentHour = getCurrentHour();
+      currentDay = getCurrentDayOfWeek();
+      currentTimestamp = Time.now();
+    };
+  };
+
+  // Debug function to manually trigger notification check
+  public shared ({ caller }) func debugCheckNotification() : async {
+    hasProfile : Bool;
+    hasSettings : Bool;
+    settingsEnabled : Bool;
+    dayMatches : Bool;
+    timeMatches : Bool;
+    isActive : Bool;
+    result : Bool;
+  } {
+    switch (PrincipalMapOps.get(userProfiles, caller)) {
+      case (?profile) {
+        switch (profile.weeklyReminderSettings) {
+          case (?settings) {
+            let currentDay = getCurrentDayOfWeek();
+            let isRemTime = isReminderTime(settings.timeSlot);
+            let active = isUserActive(caller);
+            {
+              hasProfile = true;
+              hasSettings = true;
+              settingsEnabled = settings.enabled;
+              dayMatches = settings.dayOfWeek == currentDay;
+              timeMatches = isRemTime;
+              isActive = active;
+              result = settings.enabled and settings.dayOfWeek == currentDay and isRemTime and active;
+            };
+          };
+          case null {
+            {
+              hasProfile = true;
+              hasSettings = false;
+              settingsEnabled = false;
+              dayMatches = false;
+              timeMatches = false;
+              isActive = isUserActive(caller);
+              result = false;
+            };
+          };
+        };
+      };
+      case null {
+        {
+          hasProfile = false;
+          hasSettings = false;
+          settingsEnabled = false;
+          dayMatches = false;
+          timeMatches = false;
+          isActive = false;
+          result = false;
+        };
+      };
+    };
+  };
+
   // Initialize timers (called after deployment)
   public func initializeNotificationTimers() : async () {
     // Set up recurring timer to check every hour

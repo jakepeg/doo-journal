@@ -5,6 +5,7 @@ import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { routeTree } from './routeTree.gen';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import OfflineIndicator from './components/OfflineIndicator';
+import NotificationPrompt from './components/NotificationPrompt';
 import { useActivityTracker } from './hooks/useActivityTracker';
 import { useNotificationChecker } from './hooks/useNotificationChecker';
 import { useEffect } from 'react';
@@ -37,6 +38,7 @@ function App() {
       <RouterProvider router={router} />
       <OfflineIndicator />
       <PWAInstallPrompt />
+      <NotificationPrompt />
       <Toaster 
         position="top-right" 
         richColors 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
 import { Button } from './ui/button';
-import { Bell, Clock, Calendar } from 'lucide-react';
+import { Bell, Clock, Calendar, AlertCircle } from 'lucide-react';
 
 interface CollapsibleReminderSectionProps {
   settings?: any;
@@ -99,8 +99,71 @@ export default function CollapsibleReminderSection({ settings, onChange }: Colla
 
 
 
+  // Check notification permission status
+  const [notificationPermission, setNotificationPermission] = useState(
+    'Notification' in window ? Notification.permission : 'unsupported'
+  );
+
+  useEffect(() => {
+    const checkPermission = () => {
+      if ('Notification' in window) {
+        setNotificationPermission(Notification.permission);
+      }
+    };
+
+    // Check permission periodically
+    const interval = setInterval(checkPermission, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      
+      if (permission === 'denied') {
+        alert(`
+📱 To enable notifications manually:
+
+1. Click the 🔒 lock icon next to the web address
+2. Find "Notifications" and change it to "Allow"
+3. Refresh the page
+
+This helps us remind you to write in your journal! 📓
+        `.trim());
+      }
+    }
+  };
+
   return (
     <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+      {/* Notification Permission Warning */}
+      {enabled && notificationPermission !== 'granted' && (
+        <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <AlertCircle className="w-4 h-4 mt-0.5 text-yellow-600 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm text-yellow-800 font-medium">
+              Notifications need permission to work
+            </p>
+            <p className="text-xs text-yellow-700 mt-1">
+              {notificationPermission === 'denied' 
+                ? 'Click the lock icon next to the web address and enable notifications'
+                : 'Click below to allow notifications for reminders'
+              }
+            </p>
+            {notificationPermission === 'default' && (
+              <Button
+                size="sm"
+                onClick={requestNotificationPermission}
+                className="mt-2 bg-yellow-600 hover:bg-yellow-700 text-white text-xs h-7"
+              >
+                Enable Notifications
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Enable Reminders Section */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
