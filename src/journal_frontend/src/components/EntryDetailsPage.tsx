@@ -222,7 +222,7 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
     <>
       {/* Back to Journal Button - Only for authenticated users */}
       {isAuthenticated && (
-        <div className="container mx-auto px-4 py-4 max-w-[1024px]">
+        <div className="container mx-auto px-4 pt-4 pb-1 max-w-[1024px]">
           <Button
             onClick={handleBackToJournal}
             variant="ghost"
@@ -235,7 +235,7 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
         </div>
       )}
 
-      <main className="container mx-auto px-4 pb-8 max-w-[1024px] flex-1 mb-8 mt-8">
+      <main className="container mx-auto px-4 pb-8 max-w-[1024px] flex-1 mb-8">
         {/* Header for public viewers */}
         {!isAuthenticated && (
         <div className="flex items-center justify-between mb-6">
@@ -274,7 +274,7 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
 
       <article>
         <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
-          <CardHeader className="pb-6">
+          <CardHeader className="pb-0">
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <h1 className="text-4xl font-bold text-gray-900 flex-1">{finalEntry.title}</h1>
