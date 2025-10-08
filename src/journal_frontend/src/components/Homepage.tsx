@@ -9,6 +9,10 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { Plus, Lock, Globe, Edit, Trash2, Share2, User } from 'lucide-react';
 import { useState, useEffect, useMemo, lazy, Suspense, memo } from 'react';
+// TODO: PDF Export feature temporarily disabled due to HTML/base64 parsing complexity
+// The feature works but has issues with multiline base64 image data causing PDF content to cut off
+// Need to revisit with a different approach (server-side processing or better HTML parser)
+// import { PDFExportButton } from './PDFExportButton';
 
 // Memoized entry preview to prevent layout shifts from text processing
 const EntryPreview = memo(({ entry, buildPreview }: { 
@@ -448,6 +452,15 @@ export default function Homepage() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
+                        {/* PDF Export temporarily disabled - see comment at top of file */}
+                        {/* <div onClick={(e) => e.stopPropagation()}>
+                          <PDFExportButton
+                            entry={entry}
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-500 hover:text-blue-600"
+                          />
+                        </div> */}
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
