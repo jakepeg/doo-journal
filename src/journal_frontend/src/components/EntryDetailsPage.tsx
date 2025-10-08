@@ -277,7 +277,7 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
           <CardHeader className="pb-0">
             <div className="space-y-4">
               <div className="flex items-start justify-between">
-                <h1 className="text-4xl font-bold text-gray-900 flex-1">{finalEntry.title}</h1>
+                <h1 className="text-4xl text-gray-900 flex-1">{finalEntry.title}</h1>
                 {isOwnEntry && (
                   <div className="flex items-center space-x-2 ml-4">
                     <Button

@@ -412,7 +412,7 @@ export default function Homepage() {
                   <CardHeader className="pb-1">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors mb-2">
+                        <CardTitle className="text-3xl text-gray-900 mt-1 mb-1 font-normal group-hover:text-purple-600 transition-colors">
                           {entry.title}
                         </CardTitle>
                         <div className="flex items-center space-x-3">
@@ -431,9 +431,6 @@ export default function Homepage() {
                                 Private
                                 {entry.content === '[Decryption failed]' && (
                                   <span className="ml-1 text-red-500" title="Decryption failed">⚠️</span>
-                                )}
-                                {entry.content !== '[Decryption failed]' && entry._originalContent && (
-                                  <span className="ml-1 text-green-500" title="Successfully decrypted">🔓</span>
                                 )}
                               </>
                             )}
