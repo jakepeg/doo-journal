@@ -317,6 +317,9 @@ export default function Homepage() {
                 className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm border-white/50 hover:bg-white text-gray-700 shadow-lg"
               >
                 <Edit className="w-4 h-4" />
+                {profile && (!profile.bio || !profile.profilePicture || profile.profilePicture.length === 0) && (
+                  <span className="ml-2">Complete Your Profile</span>
+                )}
               </Button>
             </div>
             <div className="absolute left-6 -bottom-12">
@@ -347,21 +350,7 @@ export default function Homepage() {
                   <span>{entries.filter(e => !e.isPublic).length} private</span>
                 </div>
               </div>
-              {/* Button container - fixed width to prevent layout shifts */}
-              <div className="ml-4 w-40 flex justify-end">
-                {profile && (!profile.bio || !profile.profilePicture || profile.profilePicture.length === 0) && (
-                  <Button
-                    key="complete-profile"
-                    onClick={() => setShowProfileModal(true)}
-                    variant="outline"
-                    size="sm"
-                    className="border-purple-200 hover:bg-purple-50 text-purple-600 hover:text-purple-700 whitespace-nowrap"
-                  >
-                    <User className="w-4 h-4 mr-2" />
-                    Complete Your Profile
-                  </Button>
-                )}
-              </div>
+
             </div>
           </CardContent>
         </Card>
