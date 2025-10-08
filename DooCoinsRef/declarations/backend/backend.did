@@ -1,0 +1,124 @@
+type Transaction = 
+ record {
+   completedDate: text;
+   id: nat;
+   name: text;
+   transactionType: text;
+   value: nat;
+ };
+type TaskRequest = 
+ record {
+   childId: text;
+   id: text;
+   name: text;
+   taskId: nat;
+   value: nat;
+ };
+type TaskCall = 
+ record {
+   id: nat;
+   name: text;
+   value: nat;
+ };
+type Task = 
+ record {
+   archived: bool;
+   id: nat;
+   name: text;
+   value: nat;
+ };
+type RewardRequest = 
+ record {
+   childId: text;
+   id: text;
+   name: text;
+   reward: nat;
+   value: nat;
+ };
+type Result_5 = 
+ variant {
+   err: Error;
+   ok: Child;
+ };
+type Result_4 = 
+ variant {
+   err: Error;
+   ok: vec Child;
+ };
+type Result_3 = 
+ variant {
+   err: Error;
+   ok: vec Goal;
+ };
+type Result_2 = 
+ variant {
+   err: Error;
+   ok: vec Task;
+ };
+type Result_1 = 
+ variant {
+   err: Error;
+   ok: vec Transaction;
+ };
+type Result = 
+ variant {
+   err: Error;
+   ok;
+ };
+type GoalCall = 
+ record {
+   name: text;
+   value: nat;
+ };
+type Goal = 
+ record {
+   archived: bool;
+   id: nat;
+   name: text;
+   value: nat;
+ };
+type Error = 
+ variant {
+   AlreadyExists;
+   BalanceNotEnough;
+   NotAuthorized;
+   NotFound;
+ };
+type ChildCall = record {name: text;};
+type Child = 
+ record {
+   archived: bool;
+   id: text;
+   name: text;
+ };
+service : {
+  addChild: (ChildCall) -> (Result_5);
+  addGoal: (GoalCall, text) -> (Result_3);
+  addTask: (TaskCall, text) -> (Result_2);
+  approveTask: (text, nat, text) -> (Result);
+  burnCode: (nat) -> (nat);
+  checkMagiCode: (nat) -> (opt text);
+  claimGoal: (text, nat, text) -> (Result);
+  currentGoal: (text, nat) -> (Result);
+  getBalance: (text) -> (nat);
+  getChild: (text) -> (text);
+  getChildren: () -> (Result_4);
+  getCurrentGoal: (text) -> (nat);
+  getGoals: (text) -> (Result_3);
+  getRewardReqs: (text) -> (vec RewardRequest);
+  getTaskReqs: (text) -> (vec TaskRequest);
+  getTasks: (text) -> (Result_2);
+  getTransactions: (text) -> (Result_1);
+  hasRewards: (text) -> (nat);
+  hasTasks: (text) -> (nat);
+  magicCode: (text) -> (opt nat);
+  numberOfProfiles: () -> (nat) query;
+  removeRewardReq: (text, text) -> (text);
+  removeTaskReq: (text, text) -> (text);
+  requestClaimReward: (text, nat, nat, text) -> (text);
+  requestTaskComplete: (text, nat, text, nat) -> (text);
+  updateChild: (text, Child) -> (Result);
+  updateGoal: (text, nat, Goal) -> (Result);
+  updateTask: (text, nat, Task) -> (Result);
+  whoami: () -> (principal) query;
+}
