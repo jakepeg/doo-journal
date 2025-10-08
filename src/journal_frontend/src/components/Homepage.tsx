@@ -7,7 +7,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
-import { Plus, Lock, Globe, Edit, Trash2, Share2 } from 'lucide-react';
+import { Plus, Lock, Globe, Edit, Trash2, Share2, User } from 'lucide-react';
 import { useState, useEffect, useMemo, lazy, Suspense, memo } from 'react';
 
 // Memoized entry preview to prevent layout shifts from text processing
@@ -30,7 +30,7 @@ const EntryPreview = memo(({ entry, buildPreview }: {
 // Lazy-loaded heavy components to reduce initial bundle size
 const JournalEntryModal = lazy(() => import('./JournalEntryModal'));
 const ProfileEditModal = lazy(() => import('./ProfileEditModal'));
-const ProfileSetupModal = lazy(() => import('./ProfileSetupModal'));
+const WelcomeModal = lazy(() => import('./WelcomeModal'));
 const EncryptionDebugPanel = lazy(() => import('./EncryptionDebugPanel'));
 import { toast } from 'sonner';
 import { LayoutShiftDebugger } from './LayoutShiftDebugger';
@@ -43,7 +43,7 @@ export default function Homepage() {
   const { decryptContent } = useVetKeys();
   const [showEntryModal, setShowEntryModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showProfileSetupModal, setShowProfileSetupModal] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState<DecryptedJournalEntry | null>(null);
   const { mutate: deleteEntry } = useDeleteJournalEntry();
 
@@ -114,9 +114,9 @@ export default function Homepage() {
   useEffect(() => {
     // Check if user needs profile setup after homepage data is loaded
     if (!isLoading && homepage && !homepage.profile) {
-      setShowProfileSetupModal(true);
+      setShowWelcomeModal(true);
     } else if (!isLoading && homepage && homepage.profile) {
-      setShowProfileSetupModal(false);
+      setShowWelcomeModal(false);
     }
   }, [homepage, isLoading, error, identity]);
 
@@ -331,14 +331,33 @@ export default function Homepage() {
             </div>
           </div>
           <CardContent className="px-6 pt-6">
-            <h2 className="text-3xl text-gray-900 mt-1 mb-1">
-              {profile?.name || 'Anonymous Writer'}
-            </h2>
-            {profile?.bio && <p className="text-gray-600 mb-2">{profile.bio}</p>}
-            <div className="flex items-center space-x-4 text-sm text-gray-500">
-              <span>{entries.length} journal entries</span>
-              <span>{entries.filter(e => e.isPublic).length} public</span>
-              <span>{entries.filter(e => !e.isPublic).length} private</span>
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h2 className="text-3xl text-gray-900 mt-1 mb-1">
+                  {profile?.name || 'Anonymous Writer'}
+                </h2>
+                {profile?.bio && <p className="text-gray-600 mb-2">{profile.bio}</p>}
+                <div className="flex items-center space-x-4 text-sm text-gray-500">
+                  <span>{entries.length} journal entries</span>
+                  <span>{entries.filter(e => e.isPublic).length} public</span>
+                  <span>{entries.filter(e => !e.isPublic).length} private</span>
+                </div>
+              </div>
+              {/* Button container - fixed width to prevent layout shifts */}
+              <div className="ml-4 w-40 flex justify-end">
+                {profile && (!profile.bio || !profile.profilePicture || profile.profilePicture.length === 0) && (
+                  <Button
+                    key="complete-profile"
+                    onClick={() => setShowProfileModal(true)}
+                    variant="outline"
+                    size="sm"
+                    className="border-purple-200 hover:bg-purple-50 text-purple-600 hover:text-purple-700 whitespace-nowrap"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Complete Your Profile
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -495,16 +514,16 @@ export default function Homepage() {
         </Suspense>
       )}
 
-      {showProfileSetupModal && (
+      {showWelcomeModal && (
         <Suspense fallback={null}>
-          <ProfileSetupModal
-            onClose={() => setShowProfileSetupModal(false)}
+          <WelcomeModal
+            onClose={() => setShowWelcomeModal(false)}
           />
         </Suspense>
       )}
       
-      {/* Debug layout shifts in development */}
-      {import.meta.env.DEV && <LayoutShiftDebugger />}
+      {/* Debug layout shifts in development - disabled during onboarding work */}
+      {false && import.meta.env.DEV && <LayoutShiftDebugger />}
     </div>
   );
 }
