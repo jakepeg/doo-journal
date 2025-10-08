@@ -62,7 +62,7 @@ This helps us remind you to write in your journal! 📓
 
   return (
     <div className="fixed bottom-4 right-4 z-50 max-w-sm">
-      <Card className="shadow-lg border-purple-200">
+      <Card className="shadow-lg border-purple-200 bg-white">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -93,10 +93,10 @@ This helps us remind you to write in your journal! 📓
           <div className="flex gap-2">
             <Button 
               onClick={handleEnableNotifications}
-              className="flex-1 bg-purple-600 hover:bg-purple-700"
+              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
               disabled={hasInteracted}
             >
-              <Bell className="w-4 h-4 mr-2" />
+              <Bell className="w-4 h-4 mr-2 text-white" />
               {hasInteracted ? 'Please check browser...' : 'Enable Reminders'}
             </Button>
             <Button 
