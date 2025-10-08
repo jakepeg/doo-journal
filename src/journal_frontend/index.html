@@ -11,29 +11,18 @@
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#8b5cf6" />
 
-  <!-- Font preloading to reduce CLS -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
-  
-  <!-- Preload critical font files -->
-  <link rel="preload" href="https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeAmM.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="https://fonts.gstatic.com/s/fredoka/v10/X7nP4R87HrSqjb4l2B2Z9JFN.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- System fonts - no external dependencies -->
   <style>
-    /* Critical CSS to prevent font loading shifts */
-    * {
-      font-display: swap;
-    }
-    
-    /* Prevent font-related layout shifts with size-adjusted fallbacks */
+    /* System fonts for consistent performance and no external dependencies */
     :root {
-      --font-inter-fallback: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      --font-fredoka-fallback: "Comic Sans MS", cursive, system-ui, sans-serif;
+      --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+      --font-fun: "Comic Sans MS", "Chalkboard SE", "Marker Felt", "Bradley Hand", cursive, var(--font-system);
     }
     
-    /* Ensure consistent font metrics during loading */
+    /* Consistent system font metrics */
     body, html {
-      font-family: var(--font-inter-fallback);
+      font-family: var(--font-system);
       font-size: 16px;
       line-height: 1.5;
       font-weight: 400;
