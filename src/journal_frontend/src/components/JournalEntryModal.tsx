@@ -9,8 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { useCreateJournalEntry, useUpdateJournalEntry, type DecryptedJournalEntry } from '../hooks/useQueries';
 // import { useFileUpload } from '../blob-storage/FileStorage';
 import RichTextEditor from './RichTextEditor-new';
-import EmojiPicker from './EmojiPicker';
-import { BookOpen, Lock, Unlock, Calendar as CalendarIcon, Smile, Image as ImageIcon } from 'lucide-react';
+import { BookOpen, Lock, Unlock, Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -25,6 +24,7 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
   const [isPublic, setIsPublic] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [imagePath, setImagePath] = useState<string>('');
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const { mutate: createEntry, isPending: isCreating } = useCreateJournalEntry();
   const { mutate: updateEntry, isPending: isUpdating } = useUpdateJournalEntry();
@@ -80,10 +80,6 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
     } finally {
       setIsUploading(false);
     }
-  }, []);
-
-  const handleEmojiSelect = useCallback((emoji: string) => {
-    setContent(prev => prev + emoji);
   }, []);
 
   const handleContentChange = useCallback((newContent: string) => {
@@ -159,7 +155,7 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
               <Label className="text-sm font-semibold text-gray-700">
                 Entry Date 📅
               </Label>
-              <Popover>
+              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     type="button"
@@ -178,6 +174,7 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
                       if (date) {
                         console.log('Date selected:', date);
                         setSelectedDate(date);
+                        setIsCalendarOpen(false); // Close calendar when date is selected
                       }
                     }}
                     className="rounded-md border"
@@ -189,31 +186,9 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
 
           {/* Content Editor */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-semibold text-gray-700">
-                Your Story 📝
-              </Label>
-              <div className="flex items-center space-x-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="border-purple-200 hover:border-purple-400"
-                    >
-                      <Smile className="w-4 h-4 mr-1" />
-                      Emoji
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80 p-0 bg-white rounded-lg shadow-lg border border-purple-100" align="end">
-                    <EmojiPicker onEmojiSelect={handleEmojiSelect} />
-                  </PopoverContent>
-                </Popover>
-                
-
-              </div>
-            </div>
+            <Label className="text-sm font-semibold text-gray-700">
+              Your Story 📝
+            </Label>
             <RichTextEditor
               key="journal-editor-modal" // Stable key to prevent re-mounting
               value={content}
@@ -226,7 +201,10 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
           </div>
 
           {/* Privacy Settings */}
-          <div className="flex items-center justify-between p-4 rounded-lg border-2 border-purple-200 select-none">
+          <div 
+            className="flex items-center justify-between p-4 rounded-lg border-2 border-purple-200 select-none cursor-pointer hover:bg-purple-50 transition-colors duration-200"
+            onClick={() => setIsPublic(!isPublic)}
+          >
             <div className="flex items-center space-x-3">
               {isPublic ? (
                 <Unlock className="w-5 h-5 text-green-600" />
@@ -234,7 +212,7 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
                 <Lock className="w-5 h-5 text-red-600" />
               )}
               <div>
-                <Label htmlFor="privacy" className="text-sm font-semibold text-gray-700 flex items-center gap-1">
+                <Label htmlFor="privacy" className="text-sm font-semibold text-gray-700 cursor-pointer">
                   {isPublic ? 'Public Entry' : 'Private Entry'}
                 </Label>
                 <p className="text-xs text-gray-500">
@@ -245,12 +223,14 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
                 </p>
               </div>
             </div>
-            <Switch
-              id="privacy"
-              checked={isPublic}
-              onCheckedChange={setIsPublic}
-              className="bg-red-500 data-[state=checked]:bg-green-500"
-            />
+            <div className="relative" onClick={(e) => e.stopPropagation()}>
+              <Switch
+                id="privacy"
+                checked={isPublic}
+                onCheckedChange={setIsPublic}
+                className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-green-500 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white transition-colors duration-200 [&>span]:bg-white [&>span]:shadow-md"
+              />
+            </div>
           </div>
 
           <div className="flex space-x-3 pt-4">
