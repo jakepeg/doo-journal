@@ -27,6 +27,7 @@ export default function AddEntryPage() {
   const [imagePath, setImagePath] = useState<string>('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isMounted, setIsMounted] = useState(true);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const isAuthenticatedRef = useRef(false);
 
   const { mutate: createEntry, isPending } = useCreateJournalEntry();
@@ -178,7 +179,7 @@ export default function AddEntryPage() {
   <Label className="text-sm font-semibold text-gray-700">
     Entry Date 📅
   </Label>
-  <Popover>
+  <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
     <PopoverTrigger asChild>
       <Button
         type="button"
@@ -197,6 +198,7 @@ export default function AddEntryPage() {
           console.log('Date selected:', date);
           if (date) {
             setSelectedDate(date);
+            setIsCalendarOpen(false); // Close calendar when date is selected
           }
         }}
         className="rounded-md border"
