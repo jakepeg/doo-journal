@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
-import { useGetCallerUserProfile, useSaveUserProfile } from '../hooks/useQueries';
+import { useGetOwnHomepage, useSaveUserProfile } from '../hooks/useQueries';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Camera, Upload, X, User, Image } from 'lucide-react';
 import { toast } from 'sonner';
@@ -15,7 +15,9 @@ interface ProfileEditModalProps {
 }
 
 export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
-  const { data: currentProfile } = useGetCallerUserProfile();
+  const { data: homepage, isLoading, error } = useGetOwnHomepage();
+  const currentProfile = homepage?.profile;
+  console.log('ProfileEditModal: Hook state:', { currentProfile, isLoading, error });
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
@@ -27,7 +29,15 @@ export default function ProfileEditModal({ onClose }: ProfileEditModalProps) {
   const { mutate: saveProfile, isPending: isSaving } = useSaveUserProfile();
 
   useEffect(() => {
+    console.log('ProfileEditModal: currentProfile changed:', currentProfile);
     if (currentProfile) {
+      console.log('ProfileEditModal: Loading profile data:', {
+        name: currentProfile.name,
+        bio: currentProfile.bio,
+        hasProfilePic: currentProfile.profilePicture && currentProfile.profilePicture.length > 0,
+        hasCoverImage: currentProfile.coverImage && currentProfile.coverImage.length > 0
+      });
+      
       setName(currentProfile.name);
       setBio(currentProfile.bio);
       

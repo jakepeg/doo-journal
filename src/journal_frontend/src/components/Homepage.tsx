@@ -308,6 +308,9 @@ export default function Homepage() {
                   className="w-full h-full object-cover"
                   width="1024"
                   height="192"
+                  loading="lazy"
+                  decoding="async"
+                  style={{ contentVisibility: 'auto' }}
                 />
               ) : null}
               <Button
@@ -330,6 +333,8 @@ export default function Homepage() {
                   className="object-cover"
                   width="96"
                   height="96"
+                  loading="lazy"
+                  decoding="async"
                 />
                 <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-400 text-white text-3xl font-bold">
                   {profile?.name?.charAt(0).toUpperCase() || '?'}

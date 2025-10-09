@@ -8,6 +8,7 @@ import { useSaveUserProfile } from '../hooks/useQueries';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Camera, Upload, X, User, Sparkles, Image } from 'lucide-react';
 import { toast } from 'sonner';
+import { compressImage } from '../utils/imageCompression';
 
 interface ProfileSetupModalProps {
   onClose: () => void;
@@ -23,7 +24,7 @@ export default function ProfileSetupModal({ onClose }: ProfileSetupModalProps) {
   
   const { mutate: saveProfile, isPending: isSaving } = useSaveUserProfile();
 
-  const handleProfilePictureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file type
@@ -40,12 +41,24 @@ export default function ProfileSetupModal({ onClose }: ProfileSetupModalProps) {
 
       setProfilePicture(file);
       
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setProfilePicturePreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        // Compress image for better performance (profile pics: 400x400, quality 0.85)
+        const compressedDataUrl = await compressImage(file, {
+          maxWidth: 400,
+          maxHeight: 400,
+          quality: 0.85,
+          format: 'image/jpeg'
+        });
+        setProfilePicturePreview(compressedDataUrl);
+      } catch (error) {
+        console.error('Image compression failed, using original:', error);
+        // Fallback to original method
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setProfilePicturePreview(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -54,7 +67,7 @@ export default function ProfileSetupModal({ onClose }: ProfileSetupModalProps) {
     setProfilePicturePreview('');
   };
 
-  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file type
@@ -71,12 +84,24 @@ export default function ProfileSetupModal({ onClose }: ProfileSetupModalProps) {
 
       setCoverImage(file);
       
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setCoverImagePreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        // Compress cover image (1200x600, quality 0.8)
+        const compressedDataUrl = await compressImage(file, {
+          maxWidth: 1200,
+          maxHeight: 600,
+          quality: 0.8,
+          format: 'image/jpeg'
+        });
+        setCoverImagePreview(compressedDataUrl);
+      } catch (error) {
+        console.error('Image compression failed, using original:', error);
+        // Fallback to original method
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setCoverImagePreview(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -96,38 +121,13 @@ export default function ProfileSetupModal({ onClose }: ProfileSetupModalProps) {
     let profilePictureData: [] | [string] = [];
     let coverImageData: [] | [string] = [];
     
-    // If there's a profile picture file, convert it to base64
-    if (profilePicture) {
-      try {
-        const reader = new FileReader();
-        const base64Promise = new Promise<string>((resolve, reject) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-        });
-        reader.readAsDataURL(profilePicture);
-        const base64String = await base64Promise;
-        profilePictureData = [base64String];
-      } catch (error) {
-        toast.error('Failed to process profile picture');
-        return;
-      }
+    // Use compressed image data from previews
+    if (profilePicture && profilePicturePreview) {
+      profilePictureData = [profilePicturePreview];
     }
 
-    // If there's a cover image file, convert it to base64
-    if (coverImage) {
-      try {
-        const reader = new FileReader();
-        const base64Promise = new Promise<string>((resolve, reject) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-        });
-        reader.readAsDataURL(coverImage);
-        const base64String = await base64Promise;
-        coverImageData = [base64String];
-      } catch (error) {
-        toast.error('Failed to process cover image');
-        return;
-      }
+    if (coverImage && coverImagePreview) {
+      coverImageData = [coverImagePreview];
     }
 
     saveProfile(
