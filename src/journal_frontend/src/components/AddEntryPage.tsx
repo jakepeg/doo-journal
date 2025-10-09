@@ -227,7 +227,10 @@ export default function AddEntryPage() {
               </div>
 
               {/* Privacy Settings */}
-              <div className="flex items-center justify-between p-4 rounded-lg border-2 border-purple-200 select-none">
+              <div 
+                className="flex items-center justify-between p-4 rounded-lg border-2 border-purple-200 select-none cursor-pointer hover:bg-purple-50 transition-colors duration-200"
+                onClick={() => setIsPublic(!isPublic)}
+              >
                 <div className="flex items-center space-x-3">
                   {isPublic ? (
                     <Unlock className="w-5 h-5 text-green-600" />
@@ -235,7 +238,7 @@ export default function AddEntryPage() {
                     <Lock className="w-5 h-5 text-red-600" />
                   )}
                   <div>
-                    <Label htmlFor="privacy" className="text-sm font-semibold text-gray-700">
+                    <Label htmlFor="privacy" className="text-sm font-semibold text-gray-700 cursor-pointer">
                       {isPublic ? 'Public Entry' : 'Private Entry'}
                     </Label>
                     <p className="text-xs text-gray-500">
@@ -246,7 +249,7 @@ export default function AddEntryPage() {
                     </p>
                   </div>
                 </div>
-                <div className="relative">
+                <div className="relative" onClick={(e) => e.stopPropagation()}>
                   <Switch
                     id="privacy"
                     checked={isPublic}
