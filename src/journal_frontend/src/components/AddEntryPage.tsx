@@ -246,12 +246,14 @@ export default function AddEntryPage() {
                     </p>
                   </div>
                 </div>
-                <Switch
-                  id="privacy"
-                  checked={isPublic}
-                  onCheckedChange={setIsPublic}
-                  className="bg-red-500 data-[state=checked]:bg-green-500"
-                />
+                <div className="relative">
+                  <Switch
+                    id="privacy"
+                    checked={isPublic}
+                    onCheckedChange={setIsPublic}
+                    className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-green-500 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white transition-colors duration-200 [&>span]:bg-white [&>span]:shadow-md"
+                  />
+                </div>
               </div>
 
               {/* Submit Button */}
