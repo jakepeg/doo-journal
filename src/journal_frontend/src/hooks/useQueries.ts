@@ -63,11 +63,7 @@ export function useSaveUserProfile() {
       return await actor.saveCallerUserProfile(profile);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
-      queryClient.invalidateQueries({ queryKey: ['ownHomepage'] });
-      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-      
-      // Clear localStorage cache so fresh data is fetched
+      // Clear localStorage cache first so fresh data is fetched
       try {
         localStorage.removeItem('doo_journal_profile_cache');
         localStorage.removeItem('doo_journal_profile_cache_timestamp');
@@ -75,6 +71,11 @@ export function useSaveUserProfile() {
       } catch (e) {
         console.warn('Failed to clear profile cache:', e);
       }
+      
+      // Invalidate and refetch queries to immediately update UI
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['ownHomepage'] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile'], refetchType: 'active' });
       
       toast.success('Profile saved successfully!');
     },
@@ -145,7 +146,7 @@ export function useGetUserProfile() {
     retryDelay: 200,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
   });
 }
 
