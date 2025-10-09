@@ -36,10 +36,11 @@ export default function TopNavigation() {
   }, []);
 
   return (
-    <header
-      className={`sticky top-0 z-40 w-full transition-all duration-300'`}
-
-    >
+    <header className={`sticky top-0 z-40 w-full transition-all duration-300 ${
+      scrolled 
+        ? 'backdrop-blur-md' 
+        : 'backdrop-blur-sm'
+    }`}>
       <div className="w-full px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Logo / Title */}
