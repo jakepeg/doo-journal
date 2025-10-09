@@ -35,24 +35,10 @@ export default function TopNavigation() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Solid color for navbar when scrolled
-  // Use the same gradient as the original navbar for solid background
-  const solidBg = 'linear-gradient(to right, #ede9fe, #eff6ff)'; // from-purple-50 to-blue-50
-  const fallbackSolid = '#ede9fe';
-  const transparentBg = 'rgba(237,233,254)'; // transparent version
-
   return (
     <header
-      className={`sticky top-0 z-40 w-full transition-all duration-300 ${scrolled ? 'shadow-md' : 'shadow-none'}`}
-      style={{
-        background: scrolled ? solidBg : transparentBg,
-        boxShadow: scrolled ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
-        borderBottom: scrolled ? '1px solid #e9d5ff' : 'none',
-        backdropFilter: 'none',
-        WebkitBackdropFilter: 'none',
-        // fallback for browsers that don't support gradients inline
-        ...(scrolled ? { backgroundColor: fallbackSolid } : {}),
-      }}
+      className={`sticky top-0 z-40 w-full transition-all duration-300'`}
+
     >
       <div className="w-full px-6 py-4">
         <div className="flex items-center justify-between">
