@@ -31,16 +31,17 @@ export function useActor() {
     enabled: true,
   });
 
-  useEffect(() => {
-    if (actorQuery.data) {
-      queryClient.invalidateQueries({
-        predicate: (query) => !query.queryKey.includes(ACTOR_QUERY_KEY),
-      });
-      queryClient.refetchQueries({
-        predicate: (query) => !query.queryKey.includes(ACTOR_QUERY_KEY),
-      });
-    }
-  }, [actorQuery.data, queryClient]);
+  // Remove automatic refetch - this was causing performance issues
+  // useEffect(() => {
+  //   if (actorQuery.data) {
+  //     queryClient.invalidateQueries({
+  //       predicate: (query) => !query.queryKey.includes(ACTOR_QUERY_KEY),
+  //     });
+  //     queryClient.refetchQueries({
+  //       predicate: (query) => !query.queryKey.includes(ACTOR_QUERY_KEY),
+  //     });
+  //   }
+  // }, [actorQuery.data, queryClient]);
 
   return {
     actor: actorQuery.data || null,

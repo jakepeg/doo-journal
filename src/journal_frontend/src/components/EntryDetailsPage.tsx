@@ -60,8 +60,7 @@ export default function EntryDetailPage({ userId, entryId }: EntryDetailPageProp
       
       return {
         ...entry,
-        content: stringContent,
-        _originalContent: stringContent
+        content: stringContent
       };
     }
   };

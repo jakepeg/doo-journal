@@ -149,7 +149,7 @@ export default function Homepage() {
       const fullEntry: DecryptedJournalEntry = {
         ...entry,
         content: decrypted,
-        _originalContent: fresh.content,
+
       };
       setEditingEntry(fullEntry);
     } catch (e) {

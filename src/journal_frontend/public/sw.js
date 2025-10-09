@@ -1,7 +1,7 @@
-const CACHE_NAME = 'doo-journal-v3';
-const STATIC_CACHE = 'doo-journal-static-v3';
-const DYNAMIC_CACHE = 'doo-journal-dynamic-v3';
-const RUNTIME_CACHE = 'doo-journal-runtime-v3';
+const CACHE_NAME = 'doo-journal-v5';
+const STATIC_CACHE = 'doo-journal-static-v5';
+const DYNAMIC_CACHE = 'doo-journal-dynamic-v5';
+const RUNTIME_CACHE = 'doo-journal-runtime-v5';
 
 // Cache duration constants (in milliseconds)
 const CACHE_DURATION = {
@@ -24,7 +24,7 @@ const ASSET_PATTERN = /\.(js|css|png|jpg|jpeg|gif|svg|woff2?|ttf|ico)$/;
 
 // Install event - cache only essential static assets
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing v3...');
+  console.log('Service Worker: Installing v5 - Updated:', new Date().toISOString());
   event.waitUntil(
     Promise.all([
       // Cache only essential assets immediately
@@ -42,14 +42,14 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches and claim clients
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating v3...');
+  console.log('Service Worker: Activating v5...');
   event.waitUntil(
     Promise.all([
       // Clean up old caches
       caches.keys().then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            if (!cacheName.includes('v3')) {
+            if (!cacheName.includes('v5')) {
               console.log('Service Worker: Deleting old cache', cacheName);
               return caches.delete(cacheName);
             }
@@ -96,9 +96,9 @@ self.addEventListener('fetch', (event) => {
   
   const url = new URL(request.url);
 
-  // Strategy 1: Network First for HTML (SPA navigation)
+  // Strategy 1: Stale While Revalidate for HTML (fast + fresh)
   if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(networkFirstStrategy(request, DYNAMIC_CACHE, CACHE_DURATION.DYNAMIC));
+    event.respondWith(staleWhileRevalidateStrategy(request, DYNAMIC_CACHE, CACHE_DURATION.DYNAMIC));
     return;
   }
 
@@ -215,7 +215,7 @@ async function cleanupExpiredCache() {
   const cacheNames = await caches.keys();
   
   for (const cacheName of cacheNames) {
-    if (!cacheName.includes('v3')) continue;
+    if (!cacheName.includes('v5')) continue;
     
     const cache = await caches.open(cacheName);
     const requests = await cache.keys();

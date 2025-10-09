@@ -167,7 +167,11 @@ export function useNotificationChecker() {
         }
       }
     };
-    console.log('[Notifications] Debug functions available at window.notificationDebug');
+    // Debug functions available (reduced logging for performance)
+    if (!(window as any).hasNotificationDebug) {
+      console.log('[Notifications] Debug functions available at window.notificationDebug');
+      (window as any).hasNotificationDebug = true;
+    }
     
     return () => {
       // Clean up global debug functions when component unmounts

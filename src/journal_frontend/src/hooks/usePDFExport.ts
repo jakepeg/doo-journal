@@ -1,10 +1,11 @@
 import { useCallback } from 'react';
-import jsPDF from 'jspdf';
 import type { JournalEntry } from '../../../declarations/journal_backend/journal_backend.did';
 
 export function usePDFExport() {
   const exportEntryAsPDF = useCallback(async (entry: JournalEntry) => {
     try {
+      // Dynamically import jsPDF only when needed
+      const { default: jsPDF } = await import('jspdf');
       // Simple text conversion
       let text = entry.content;
       

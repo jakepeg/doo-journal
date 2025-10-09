@@ -1,10 +1,15 @@
-import React, { useMemo, useRef, useCallback, useState } from 'react';
-import ReactQuill from 'react-quill';
+import React, { useMemo, useRef, useCallback, useState, lazy, Suspense } from 'react';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import EmojiPicker from './EmojiPicker';
 import { Smile } from 'lucide-react';
-import 'react-quill/dist/quill.snow.css';
+
+// Lazy load React Quill to reduce initial bundle size
+const ReactQuill = lazy(() => import('react-quill').then(module => {
+  // Also lazy load the CSS
+  import('react-quill/dist/quill.snow.css');
+  return { default: module.default };
+}));
 
 interface RichTextEditorProps {
   value: string;
@@ -21,7 +26,7 @@ export default function RichTextEditor({
   maxLength,
   onImageUpload,
 }: RichTextEditorProps) {
-  const quillRef = useRef<ReactQuill>(null);
+  const quillRef = useRef<any>(null);
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
   const handleChange = useCallback((content: string) => {
@@ -125,14 +130,20 @@ export default function RichTextEditor({
     <div className="relative">
       <div className="border border-purple-200 rounded-lg overflow-hidden">
         <div className="[&_.ql-editor]:min-h-[120px]">
-          <ReactQuill
-            ref={quillRef}
-            theme="snow"
-            value={value}
-            onChange={handleChange}
-            placeholder={placeholder || 'Start writing your journal...'}
-            modules={modules}
-          />
+          <Suspense fallback={
+            <div className="min-h-[120px] flex items-center justify-center text-gray-500">
+              Loading editor...
+            </div>
+          }>
+            <ReactQuill
+              ref={quillRef}
+              theme="snow"
+              value={value}
+              onChange={handleChange}
+              placeholder={placeholder || 'Start writing your journal...'}
+              modules={modules}
+            />
+          </Suspense>
         </div>
         
         {maxLength && (

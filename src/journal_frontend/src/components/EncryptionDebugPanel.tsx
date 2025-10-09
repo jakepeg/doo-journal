@@ -48,10 +48,9 @@ export default function EncryptionDebugPanel() {
                       </div>
                     )}
                     
-                    {!entry.isPublic && entry._originalContent && (
+                    {!entry.isPublic && (
                       <>
-                        <div><strong>Original Length:</strong> {entry._originalContent.length} bytes</div>
-                        <div><strong>Decrypted Length:</strong> {entry.content.length} chars</div>
+                        <div><strong>Content Length:</strong> {entry.content.length} chars</div>
                         <div className="flex items-center gap-2">
                           <strong>Status:</strong>
                           {entry.content === '[Decryption failed]' ? (

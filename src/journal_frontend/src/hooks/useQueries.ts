@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { useActor } from './useActor';
 import { useVetKeys } from './useVetKeys';
 import { UserProfile, JournalEntry } from '../../../declarations/journal_backend/journal_backend.did';
@@ -77,7 +78,6 @@ export function useSaveUserProfile() {
 //
 export type DecryptedJournalEntry = Omit<JournalEntry, 'content'> & {
   content: string; // Decrypted content as string
-  _originalContent?: string; // Keep original for debugging (now string-based)
 };
 
 //
@@ -94,112 +94,67 @@ export function useGetOwnHomepage() {
 
       const result = await actor.getOwnHomepage();
       
-      // Optimize processing with caching and batching
-      debug.log(`Processing ${result.entries.length} entries from backend`);
-      
-      // Pre-compile regex for better performance
-      const LARGE_CONTENT_REGEX = /^LARGE_CONTENT:/;
-      const PERCENT_ENCODED_REGEX = /%[0-9A-Fa-f]{2}/;
-      
-      // Create a cache for decoded large content
-      const largeContentCache = new Map<string, string>();
-      
-      // Helper function to decode large content with caching
-      const decodeLargeContent = (content: string): string => {
-        if (largeContentCache.has(content)) {
-          return largeContentCache.get(content)!;
-        }
-        
-        try {
-          const encoded = content.replace('LARGE_CONTENT:', '');
-          let base = encoded.trim();
-          
-          // Quick check - if content is very short, skip processing
-          if (base.length < 10) {
-            largeContentCache.set(content, content);
-            return content;
-          }
-          
-          // If percent-encoded, decode once
-          if (PERCENT_ENCODED_REGEX.test(base)) {
-            try { 
-              base = decodeURIComponent(base); 
-            } catch {
-              // If decode fails, use original
-              largeContentCache.set(content, content);
-              return content;
-            }
-          }
-          
-          // Convert URL-safe variants and clean
-          base = base.replace(/-/g, '+').replace(/_/g, '/').replace(/[^A-Za-z0-9+/=]/g, '');
-          
-          // Fix padding efficiently
-          const paddingNeeded = 4 - (base.length % 4);
-          if (paddingNeeded !== 4) {
-            base += '='.repeat(paddingNeeded);
-          }
-          
-          // Decode base64
-          const bin = atob(base);
-          
-          // Try URI component decode with safety check
-          let decoded = bin;
-          try {
-            const uriDecoded = decodeURIComponent(bin);
-            // Only use decoded version if it doesn't corrupt image data
-            if (!bin.includes('data:image/') || uriDecoded.includes('data:image/')) {
-              decoded = uriDecoded;
-            }
-          } catch {
-            // Use binary version if URI decode fails
-          }
-          
-          largeContentCache.set(content, decoded);
-          return decoded;
-        } catch (error) {
-          debug.warn(`Failed to decode large content:`, error);
-          largeContentCache.set(content, content);
-          return content;
-        }
-      };
-      
-      // Process entries with optimized async handling
-      const decryptedEntries: DecryptedJournalEntry[] = await Promise.all(
-        result.entries.map(async (entry, index): Promise<DecryptedJournalEntry> => {
+      // Process entries - only decrypt if private, handle large content for public
+      const decryptedEntries = await Promise.all(
+        result.entries.map(async (entry: any) => {
           // Only decrypt private entries - public entries are stored as plain text
           if (entry.isPublic) {
             let publicContent = entry.content;
             
-            // Handle large content markers efficiently
-            if (LARGE_CONTENT_REGEX.test(publicContent)) {
-              publicContent = decodeLargeContent(publicContent);
-              debug.log(`Decoded large public content for entry ${index + 1}`);
+            // Handle large content markers
+            if (publicContent.startsWith('LARGE_CONTENT:')) {
+              try {
+                const encoded = publicContent.replace('LARGE_CONTENT:', '');
+                let base = encoded.trim();
+                
+                // Basic percent-decode if needed
+                if (/%[0-9A-Fa-f]{2}/.test(base)) {
+                  try { 
+                    base = decodeURIComponent(base); 
+                  } catch { /* ignore */ }
+                }
+                
+                // Convert URL-safe base64 and clean
+                base = base.replace(/-/g, '+').replace(/_/g, '/').replace(/[^A-Za-z0-9+/=]/g, '');
+                
+                // Fix padding
+                const paddingNeeded = 4 - (base.length % 4);
+                if (paddingNeeded !== 4) {
+                  base += '='.repeat(paddingNeeded);
+                }
+                
+                // Decode base64
+                const bin = atob(base);
+                
+                // Try URI decode
+                try {
+                  publicContent = decodeURIComponent(bin);
+                } catch {
+                  publicContent = bin;
+                }
+              } catch (error) {
+                console.warn('Failed to decode large content:', error);
+                publicContent = '[Content could not be decoded]';
+              }
             }
             
             return {
               ...entry,
               content: publicContent,
-              _originalContent: undefined,
             };
           } else {
             // Private entries need decryption
             try {
               const decryptedContent = await decryptContent(entry.content);
-              
-              debug.log(`Successfully decrypted private entry ${index + 1}`);
-              
               return {
                 ...entry,
                 content: decryptedContent,
-                _originalContent: entry.content,
               };
             } catch (error) {
-              debug.error(`Failed to decrypt entry ${index + 1} (${entry.title}):`, error);
+              console.error('Failed to decrypt entry:', error);
               return {
                 ...entry,
                 content: '[Decryption failed]',
-                _originalContent: entry.content,
               };
             }
           }
@@ -207,18 +162,18 @@ export function useGetOwnHomepage() {
       );
 
       return {
-        profile: unwrapOpt(result.profile) || undefined,
+        profile: result.profile?.[0] || undefined,
         entries: decryptedEntries,
       };
     },
     enabled: !!actor && !actorFetching,
-    staleTime: 15 * 60 * 1000, // 15 minutes - much longer cache for better performance
-    gcTime: 30 * 60 * 1000, // 30 minutes garbage collection
-    retry: 1, // Reduce retries for faster failure
-    retryDelay: 500, // Shorter retry delay
+    staleTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    retry: 1,
+    retryDelay: 500,
     refetchOnWindowFocus: false,
-    refetchOnReconnect: false, // Don't refetch on reconnect
-    refetchOnMount: false, // Don't always refetch on mount if we have cached data
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   });
 }
 
@@ -442,8 +397,7 @@ export function useCreateJournalEntry() {
         isPublic: variables.isPublic,
         timestamp: BigInt(Date.now() * 1000000), // nanoseconds
         date: variables.date,
-        imagePath: variables.imagePath ? [variables.imagePath] : [],
-        _originalContent: variables.content
+        imagePath: variables.imagePath ? [variables.imagePath] : []
       };
 
       queryClient.setQueryData(['ownHomepage'], (old: any) => {
