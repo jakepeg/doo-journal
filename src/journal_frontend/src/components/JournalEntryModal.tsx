@@ -94,6 +94,15 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
       return;
     }
 
+    // Estimate save time and show progress
+    const estimatedTime = isPublic ? 2 : 5; // seconds
+    const startTime = performance.now();
+    
+    toast.loading(
+      `Saving ${isPublic ? 'public' : 'private'} entry... (~${estimatedTime}s)`, 
+      { id: 'save-progress' }
+    );
+
     const dateInNanoseconds = BigInt(selectedDate.getTime() * 1000000);
 
     if (isEditing && entry) {
@@ -105,7 +114,15 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
         date: dateInNanoseconds,
         imagePath: imagePath || null,
       }, {
-        onSuccess: onClose,
+        onSuccess: () => {
+          const actualTime = ((performance.now() - startTime) / 1000).toFixed(1);
+          toast.dismiss('save-progress');
+          toast.success(`Entry updated in ${actualTime}s! 🎉`);
+          onClose();
+        },
+        onError: () => {
+          toast.dismiss('save-progress');
+        }
       });
     } else {
       createEntry({
@@ -115,7 +132,15 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
         date: dateInNanoseconds,
         imagePath: imagePath || null,
       }, {
-        onSuccess: onClose,
+        onSuccess: () => {
+          const actualTime = ((performance.now() - startTime) / 1000).toFixed(1);
+          toast.dismiss('save-progress');
+          toast.success(`Entry created in ${actualTime}s! 🎉`);
+          onClose();
+        },
+        onError: () => {
+          toast.dismiss('save-progress');
+        }
       });
     }
   };
@@ -217,8 +242,8 @@ export default function JournalEntryModal({ entry, onClose }: JournalEntryModalP
                 </Label>
                 <p className="text-xs text-gray-500">
                   {isPublic 
-                    ? 'Others can see this entry when you share your profile'
-                    : 'Only you can see this entry'
+                    ? 'Others can see this entry • Saves faster ⚡' 
+                    : 'Only you can see this entry • Takes ~3-5s longer (encryption)'
                   }
                 </p>
               </div>

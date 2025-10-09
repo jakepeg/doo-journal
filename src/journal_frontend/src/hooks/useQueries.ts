@@ -65,6 +65,17 @@ export function useSaveUserProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
       queryClient.invalidateQueries({ queryKey: ['ownHomepage'] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+      
+      // Clear localStorage cache so fresh data is fetched
+      try {
+        localStorage.removeItem('doo_journal_profile_cache');
+        localStorage.removeItem('doo_journal_profile_cache_timestamp');
+        console.log('🗑️ Cleared profile cache after profile update');
+      } catch (e) {
+        console.warn('Failed to clear profile cache:', e);
+      }
+      
       toast.success('Profile saved successfully!');
     },
     onError: (error: any) => {
@@ -81,15 +92,99 @@ export type DecryptedJournalEntry = Omit<JournalEntry, 'content'> & {
 };
 
 //
-// Get own homepage with decryption
+// Get user profile only (fast loading)
 //
-export function useGetOwnHomepage() {
+export function useGetUserProfile() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<UserProfile | undefined>({
+    queryKey: ['userProfile'],
+    queryFn: async () => {
+      // Try profile cache first
+      const cacheKey = 'doo_journal_profile_cache';
+      const cacheTimestampKey = 'doo_journal_profile_cache_timestamp';
+      
+      try {
+        const cached = localStorage.getItem(cacheKey);
+        const cacheTimestamp = localStorage.getItem(cacheTimestampKey);
+        
+        // If we have cached profile less than 5 minutes old, return it immediately
+        if (cached && cacheTimestamp) {
+          const age = Date.now() - parseInt(cacheTimestamp);
+          if (age < 5 * 60 * 1000) { // 5 minutes
+            console.log('🚀 Using cached profile (age:', Math.round(age/1000), 's)');
+            return JSON.parse(cached);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to read cached profile:', e);
+      }
+
+      if (!actor) throw new Error('Actor not available');
+
+      const result = await actor.getOwnHomepage();
+      const profile = result.profile?.[0] || undefined;
+
+      // Cache profile to localStorage
+      if (profile) {
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(profile));
+          localStorage.setItem(cacheTimestampKey, Date.now().toString());
+          console.log('💾 Cached profile to localStorage');
+        } catch (e) {
+          console.warn('Failed to cache profile:', e);
+        }
+      }
+
+      return profile;
+    },
+    enabled: !!actor && !actorFetching,
+    staleTime: 15 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: 1,
+    retryDelay: 200,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+  });
+}
+
+//
+// Get journal entries only (slower loading, can be deferred)
+//
+export function useGetJournalEntries() {
   const { actor, isFetching: actorFetching } = useActor();
   const { decryptContent } = useVetKeys();
 
-  return useQuery<{ profile?: UserProfile; entries: DecryptedJournalEntry[] }>({
-    queryKey: ['ownHomepage'],
+  return useQuery<DecryptedJournalEntry[]>({
+    queryKey: ['journalEntries'],
     queryFn: async () => {
+      // Try to get cached entries from localStorage first
+      const cacheKey = 'doo_journal_entries_cache';
+      const cacheTimestampKey = 'doo_journal_entries_cache_timestamp';
+      
+      try {
+        const cached = localStorage.getItem(cacheKey);
+        const cacheTimestamp = localStorage.getItem(cacheTimestampKey);
+        
+        // If we have cached entries less than 10 minutes old, return them immediately
+        if (cached && cacheTimestamp) {
+          const age = Date.now() - parseInt(cacheTimestamp);
+          if (age < 10 * 60 * 1000) { // 10 minutes
+            console.log('🚀 Using cached journal entries (age:', Math.round(age/1000), 's)');
+            
+            // Parse cached entries and convert string BigInt values back to BigInt
+            const cachedEntries = JSON.parse(cached);
+            return cachedEntries.map((entry: any) => ({
+              ...entry,
+              timestamp: BigInt(entry.timestamp),
+              date: BigInt(entry.date)
+            }));
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to read cached entries:', e);
+      }
       if (!actor) throw new Error('Actor not available');
 
       const result = await actor.getOwnHomepage();
@@ -161,20 +256,56 @@ export function useGetOwnHomepage() {
         })
       );
 
-      return {
-        profile: result.profile?.[0] || undefined,
-        entries: decryptedEntries,
-      };
+      // Cache the processed entries to localStorage
+      try {
+        const cacheKey = 'doo_journal_entries_cache';
+        const cacheTimestampKey = 'doo_journal_entries_cache_timestamp';
+        
+        // Convert BigInt values to strings for JSON serialization
+        const serializableEntries = decryptedEntries.map(entry => ({
+          ...entry,
+          timestamp: entry.timestamp.toString(),
+          date: entry.date.toString()
+        }));
+        
+        localStorage.setItem(cacheKey, JSON.stringify(serializableEntries));
+        localStorage.setItem(cacheTimestampKey, Date.now().toString());
+        console.log('💾 Cached', decryptedEntries.length, 'journal entries to localStorage');
+      } catch (e) {
+        console.warn('Failed to cache entries:', e);
+      }
+
+      return decryptedEntries;
     },
     enabled: !!actor && !actorFetching,
-    staleTime: 15 * 60 * 1000, // 15 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    staleTime: 15 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
     retry: 1,
     retryDelay: 500,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false,
   });
+}
+
+//
+// Combined hook for backward compatibility (now uses separate queries)
+//
+export function useGetOwnHomepage() {
+  const profileQuery = useGetUserProfile();
+  const entriesQuery = useGetJournalEntries();
+
+  return {
+    data: profileQuery.data || entriesQuery.data ? {
+      profile: profileQuery.data,
+      entries: entriesQuery.data || [],
+    } : undefined,
+    isLoading: profileQuery.isLoading || entriesQuery.isLoading,
+    error: profileQuery.error || entriesQuery.error,
+    // Individual query states for granular control
+    profileQuery,
+    entriesQuery,
+  };
 }
 
 //
@@ -342,7 +473,9 @@ export function useCreateJournalEntry() {
       if (!actor) throw new Error('Actor not available');
 
       // Only encrypt private entries - public entries are stored as plain text
+      const encryptStartTime = performance.now();
       let processedContent: string;
+      
       if (isPublic) {
         debug.log('Storing public entry as plain text:', {
           title,
@@ -350,6 +483,7 @@ export function useCreateJournalEntry() {
           originalLength: content.length
         });
         processedContent = content; // Store public entries as plain text
+        console.log('⚡ Public entry processed in:', Math.round(performance.now() - encryptStartTime), 'ms');
       } else {
         debug.log('Encrypting private entry:', {
           title,
@@ -359,26 +493,44 @@ export function useCreateJournalEntry() {
         });
         
         processedContent = await encryptContent(content);
+        const encryptTime = Math.round(performance.now() - encryptStartTime);
         
         debug.log('Private entry encrypted:', {
           title,
           encryptedLength: processedContent.length
         });
+        console.log('🔐 Private entry encrypted in:', encryptTime, 'ms');
       }
 
-      const result = await actor.createJournalEntry(
-        title,
-        processedContent, // Send as encrypted string
-        isPublic,
-        date,
-        imagePath ? [imagePath] : [] // convert to opt text
-      );
+      const backendStartTime = performance.now();
+      console.log('🚀 Creating journal entry:', { title, isPublic, contentLength: processedContent.length });
       
-      // Return the entry data for optimistic update
-      return {
-        entryId: result,
-        originalData: { title, content, isPublic, date, imagePath }
-      };
+      try {
+        const result = await actor.createJournalEntry(
+          title,
+          processedContent, // Send as encrypted string
+          isPublic,
+          date,
+          imagePath ? [imagePath] : [] // convert to opt text
+        );
+        
+        const backendTime = Math.round(performance.now() - backendStartTime);
+        console.log('✅ Journal entry created successfully:', { 
+          entryId: result, 
+          title, 
+          backendTime: backendTime + 'ms',
+          totalTime: Math.round(performance.now() - encryptStartTime) + 'ms'
+        });
+        
+        // Return the entry data for optimistic update
+        return {
+          entryId: result,
+          originalData: { title, content, isPublic, date, imagePath }
+        };
+      } catch (error) {
+        console.error('❌ Failed to create journal entry:', error);
+        throw error;
+      }
     },
     // Add optimistic update
     onMutate: async (variables) => {
@@ -400,6 +552,7 @@ export function useCreateJournalEntry() {
         imagePath: variables.imagePath ? [variables.imagePath] : []
       };
 
+      // Update both the old ownHomepage query and new journalEntries query
       queryClient.setQueryData(['ownHomepage'], (old: any) => {
         if (!old) return old;
         return {
@@ -407,15 +560,38 @@ export function useCreateJournalEntry() {
           entries: [optimisticEntry, ...old.entries]
         };
       });
+      
+      // Also update the separate journalEntries query for immediate UI update
+      queryClient.setQueryData(['journalEntries'], (old: DecryptedJournalEntry[]) => {
+        if (!old) return [optimisticEntry];
+        return [optimisticEntry, ...old];
+      });
 
       // Return a context object with the snapshotted value
       return { previousData };
     },
     onSuccess: (data) => {
-      // Use more efficient refetch instead of full invalidation
+      console.log('✅ Create entry mutation succeeded:', data);
+      
+      // Clear localStorage cache so fresh data is fetched
+      try {
+        localStorage.removeItem('doo_journal_entries_cache');
+        localStorage.removeItem('doo_journal_entries_cache_timestamp');
+        console.log('🗑️ Cleared entries cache after entry creation');
+      } catch (e) {
+        console.warn('Failed to clear entries cache:', e);
+      }
+      
+      // Invalidate all relevant queries to show new entry immediately
+      queryClient.invalidateQueries({ queryKey: ['ownHomepage'] });
+      queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+      
+      // Immediately refetch to ensure backend data is loaded
+      console.log('🔄 Immediately refetching entries after successful creation');
       queryClient.refetchQueries({ 
-        queryKey: ['ownHomepage'],
-        type: 'active' // Only refetch if query is currently active
+        queryKey: ['journalEntries'],
+        type: 'active'
       });
       
       // Don't invalidate allJournalEntries immediately to avoid cascade
@@ -426,10 +602,22 @@ export function useCreateJournalEntry() {
       toast.success('Journal entry created!');
     },
     onError: (error: any, variables, context) => {
-      // Revert the optimistic update
+      console.error('❌ Create entry mutation failed:', {
+        error,
+        variables,
+        context,
+        errorMessage: error.message,
+        errorStack: error.stack
+      });
+      
+      // Revert the optimistic update for both queries
       if (context?.previousData) {
         queryClient.setQueryData(['ownHomepage'], context.previousData);
       }
+      
+      // Also revert the journalEntries query
+      queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
+      
       toast.error('Failed to create entry: ' + error.message);
     },
   });
@@ -501,6 +689,17 @@ export function useUpdateJournalEntry() {
       queryClient.invalidateQueries({ queryKey: ['ownHomepage'] });
       queryClient.invalidateQueries({ queryKey: ['allJournalEntries'] });
       queryClient.invalidateQueries({ queryKey: ['journalEntry'] });
+      queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
+      
+      // Clear localStorage cache so fresh data is fetched
+      try {
+        localStorage.removeItem('doo_journal_entries_cache');
+        localStorage.removeItem('doo_journal_entries_cache_timestamp');
+        console.log('🗑️ Cleared entries cache after entry update');
+      } catch (e) {
+        console.warn('Failed to clear entries cache:', e);
+      }
+      
       toast.success('Journal entry updated!');
     },
     onError: (error: any) => {
@@ -525,6 +724,17 @@ export function useDeleteJournalEntry() {
       queryClient.invalidateQueries({ queryKey: ['ownHomepage'] });
       queryClient.invalidateQueries({ queryKey: ['allJournalEntries'] });
       queryClient.invalidateQueries({ queryKey: ['journalEntry'] });
+      queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
+      
+      // Clear localStorage cache so fresh data is fetched
+      try {
+        localStorage.removeItem('doo_journal_entries_cache');
+        localStorage.removeItem('doo_journal_entries_cache_timestamp');
+        console.log('🗑️ Cleared entries cache after entry deletion');
+      } catch (e) {
+        console.warn('Failed to clear entries cache:', e);
+      }
+      
       toast.success('Journal entry deleted!');
     },
     onError: (error: any) => {

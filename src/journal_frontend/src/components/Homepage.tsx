@@ -1,4 +1,4 @@
-import { useGetOwnHomepage, useDeleteJournalEntry, type DecryptedJournalEntry } from '../hooks/useQueries';
+import { useGetOwnHomepage, useGetUserProfile, useGetJournalEntries, useDeleteJournalEntry, type DecryptedJournalEntry } from '../hooks/useQueries';
 import { useActor } from '../hooks/useActor';
 import { useVetKeys } from '../hooks/useVetKeys';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
@@ -42,7 +42,14 @@ import { LayoutShiftDebugger } from './LayoutShiftDebugger';
 export default function Homepage() {
   const navigate = useNavigate();
   const { identity } = useInternetIdentity();
-  const { data: homepage, isLoading, error } = useGetOwnHomepage();
+  // Separate fast profile loading from slower entries loading
+  const { data: userProfile, isLoading: profileLoading } = useGetUserProfile();
+  const { data: journalEntries, isLoading: entriesLoading, error: entriesError } = useGetJournalEntries();
+  
+  // Legacy homepage object for compatibility
+  const homepage = { profile: userProfile, entries: journalEntries || [] };
+  const isLoading = profileLoading; // Only wait for profile, not entries
+  const error = entriesError;
   const { actor } = useActor();
   const { decryptContent } = useVetKeys();
   const [showEntryModal, setShowEntryModal] = useState(false);
@@ -291,9 +298,6 @@ export default function Homepage() {
     );
   }
 
-  const profile = homepage?.profile;
-  const entries = homepage?.entries || [];
-
   return (
     <div className="min-h-screen flex flex-col">
       <div className="container mx-auto px-4 max-w-[1024px] flex-1 pb-8 min-h-[600px]">
@@ -301,16 +305,11 @@ export default function Homepage() {
         <Card className="pt-0 mt-8 mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
           <div className="relative">
             <div className="h-48 bg-gradient-to-r from-purple-400 to-blue-400 relative overflow-hidden">
-              {profile?.coverImage && profile.coverImage.length > 0 ? (
+              {userProfile?.coverImage && userProfile.coverImage.length > 0 ? (
                 <img 
-                  src={profile.coverImage[0]} 
-                  alt="Cover image"
+                  src={userProfile.coverImage[0]} 
+                  alt="Cover image" 
                   className="w-full h-full object-cover"
-                  width="1024"
-                  height="192"
-                  loading="lazy"
-                  decoding="async"
-                  style={{ contentVisibility: 'auto' }}
                 />
               ) : null}
               <Button
@@ -320,7 +319,7 @@ export default function Homepage() {
                 className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm border-white/50 hover:bg-white text-gray-700 shadow-lg"
               >
                 <Edit className="w-4 h-4" />
-                {profile && (!profile.bio || !profile.profilePicture || profile.profilePicture.length === 0) && (
+                {userProfile && (!userProfile.bio || !userProfile.profilePicture || userProfile.profilePicture.length === 0) && (
                   <span className="ml-2">Complete Your Profile</span>
                 )}
               </Button>
@@ -328,8 +327,8 @@ export default function Homepage() {
             <div className="absolute left-6 -bottom-12">
               <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
                 <AvatarImage 
-                  src={profile?.profilePicture && profile.profilePicture.length > 0 ? profile.profilePicture[0] : undefined}
-                  alt={`${profile?.name || 'User'}'s profile picture`}
+                  src={userProfile?.profilePicture && userProfile.profilePicture.length > 0 ? userProfile.profilePicture[0] : undefined}
+                  alt={`${userProfile?.name || 'User'}'s profile picture`}
                   className="object-cover"
                   width="96"
                   height="96"
@@ -337,7 +336,7 @@ export default function Homepage() {
                   decoding="async"
                 />
                 <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-400 text-white text-3xl font-bold">
-                  {profile?.name?.charAt(0).toUpperCase() || '?'}
+                  {userProfile?.name?.charAt(0).toUpperCase() || '?'}
                 </AvatarFallback>
               </Avatar>
             </div>
@@ -350,13 +349,13 @@ export default function Homepage() {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h2 className="text-3xl text-gray-900 mt-1 mb-1">
-                  {profile?.name || 'Anonymous Writer'}
+                  {userProfile?.name || 'Anonymous Writer'}
                 </h2>
-                {profile?.bio && <p className="text-gray-600 mb-2">{profile.bio}</p>}
+                                {userProfile?.bio && <p className="text-gray-600 mb-2">{userProfile.bio}</p>}
                 <div className="flex items-center space-x-4 text-sm text-gray-500">
-                  <span>{entries.length} journal entries</span>
-                  <span>{entries.filter(e => e.isPublic).length} public</span>
-                  <span>{entries.filter(e => !e.isPublic).length} private</span>
+                  <span>{(journalEntries || []).length} journal entries</span>
+                  <span>{(journalEntries || []).filter(e => e.isPublic).length} public</span>
+                  <span>{(journalEntries || []).filter(e => !e.isPublic).length} private</span>
                 </div>
               </div>
 
@@ -392,7 +391,27 @@ export default function Homepage() {
           </div>
         </div>
 
-        {entries.length === 0 ? (
+        {entriesLoading ? (
+          // Show skeleton while entries are loading
+          <div className="space-y-6 mb-8">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+                <CardHeader className="pb-1">
+                  <div className="h-6 bg-gray-200 rounded animate-pulse mb-2 w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded animate-pulse w-32"></div>
+                </CardHeader>
+                <CardContent className="pt-1 min-h-[120px]">
+                  <div className="min-h-[72px] space-y-2">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse w-full"></div>
+                    <div className="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
+                    <div className="h-4 bg-gray-200 rounded animate-pulse w-4/6"></div>
+                  </div>
+                  <div className="h-4 bg-gray-200 rounded animate-pulse w-32 mt-2"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (journalEntries || []).length === 0 ? (
           <Card className="border-2 border-dashed border-purple-200 bg-purple-50/50 mb-8 min-h-[300px]">
             <CardContent className="p-12 text-center">
               <h4 className="text-xl font-semibold text-gray-700 mb-2">Start Your Journey!</h4>
@@ -410,7 +429,7 @@ export default function Homepage() {
         ) : (
           <>
             <div className="space-y-6 mb-8 min-h-[200px]">
-              {entries
+              {(journalEntries || [])
                 .sort((a, b) => Number(b.date) - Number(a.date))
                 .map((entry) => (
                 <Card 
