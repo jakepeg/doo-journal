@@ -223,8 +223,8 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
     <div className="flex flex-col flex-1">
 
       <div className="container mx-auto px-4 py-4 max-w-[1024px] flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">
-          {profile?.name ? `${profile.name}'s Shared Journal` : "Shared Journal"}
+        <h2 className="text-2xl text-gray-900">
+          {profile?.name ? `${profile.name}'s Journal` : "Shared Journal"}
         </h2>
         <div className="flex items-center space-x-2">
           <Button
@@ -263,8 +263,8 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
                 ) : null}
                 <div className="absolute inset-0 bg-black/20"></div>
               </div>
-              <div className="absolute left-6 -bottom-10">
-                <Avatar className="w-20 h-20 border-4 border-white shadow-lg">
+              <div className="absolute left-6 -bottom-12">
+                <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
                   <AvatarImage 
                     src={profile?.profilePicture && profile.profilePicture.length > 0 ? profile.profilePicture[0] : undefined}
                     alt={`${profile?.name || 'User'}'s profile picture`}
@@ -276,26 +276,28 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
                 </Avatar>
               </div>
             </div>
-            <CardContent className="px-6 pt-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            <CardContent className="px-6 pt-8">
+              <h2 className="text-3xl text-gray-900 mb-1">
                 {profile.name}
               </h2>
               {profile.bio && (
                 <p className="text-gray-600 mb-4">{profile.bio}</p>
               )}
-              <div className="flex items-center space-x-4 text-sm text-gray-500">
+              {/*
+              <div className="flex items-center space-x-4 text-xs text-muted-foreground mt-1 mb-1 font-normal">
                 <span>{entries.length} shared entries</span>
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="default" className="text-xs px-2 py-1 flex items-center gap-1 font-normal">
                   <Globe className="w-3 h-3 mr-1" />
                   Shared Profile
                 </Badge>
               </div>
+              */}
             </CardContent>
           </Card>
         ) : (
           <Card className="mt-8 mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm">
             <CardContent className="p-12 text-center">
-              <h2 className="text-2xl font-bold text-gray-700 mb-2">Anonymous Writer</h2>
+              <h2 className="text-3xl text-gray-900 mb-2">Anonymous Writer</h2>
               <p className="text-gray-600">This user hasn't set up their profile yet.</p>
             </CardContent>
           </Card>
@@ -338,17 +340,17 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
                   <CardHeader className="pb-1">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors mb-2">
+                        <CardTitle className="text-3xl text-gray-900 mt-1 mb-1 font-normal group-hover:text-purple-600 transition-colors">
                           {entry.title}
                         </CardTitle>
                         <div className="flex items-center space-x-3">
                           <span className="text-sm text-gray-500">
                             {formatDate(entry.date)}
                           </span>
-                          <Badge variant="default" className="text-xs">
+                          {/* <Badge variant="default" className="text-xs">
                             <Globe className="w-3 h-3 mr-1" />
                             Shared
-                          </Badge>
+                          </Badge> */}
                         </div>
                       </div>
                     </div>

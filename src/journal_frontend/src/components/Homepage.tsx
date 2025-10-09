@@ -337,7 +337,11 @@ export default function Homepage() {
               </Avatar>
             </div>
           </div>
-          <CardContent className="px-6 pt-6">
+
+
+
+          
+          <CardContent className="px-6 pt-8">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h2 className="text-3xl text-gray-900 mt-1 mb-1">
