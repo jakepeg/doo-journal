@@ -13,8 +13,7 @@ import { useCreateJournalEntry } from '../hooks/useQueries';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 // import { useFileUpload } from '../blob-storage/FileStorage';
 import RichTextEditor from './RichTextEditor-new';
-import EmojiPicker from './EmojiPicker';
-import { ArrowLeft, Calendar as CalendarIcon, Lock, Unlock, Save, Smile, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Calendar as CalendarIcon, Lock, Unlock, Save } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -118,14 +117,6 @@ export default function AddEntryPage() {
     }
   }, [isMounted]);
 
-  const handleEmojiSelect = useCallback((emoji: string) => {
-    console.log('[DEBUG] AddEntryPage: Emoji selected', { emoji });
-    setContent(prev => {
-      console.log('[DEBUG] AddEntryPage: Updating content with emoji');
-      return prev + emoji;
-    });
-  }, []);
-
   const handleContentChange = useCallback((newContent: string) => {
     setContent(newContent);
   }, [identity, loginStatus]);
@@ -219,57 +210,9 @@ export default function AddEntryPage() {
 
               {/* Content Editor */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-semibold text-gray-700">
-                    Your Story 📝
-                  </Label>
-                  <div className="flex items-center space-x-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="border-purple-200 hover:border-purple-400"
-                        >
-                          <Smile className="w-4 h-4 mr-1" />
-                          Emoji
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-80 p-0 bg-white rounded-lg shadow-lg border border-purple-100" align="end">
-                        <EmojiPicker onEmojiSelect={handleEmojiSelect} />
-                      </PopoverContent>
-                    </Popover>
-                    
-                    {/* <label className="cursor-pointer">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="border-purple-200 hover:border-purple-400"
-                        disabled={isUploading}
-                        asChild
-                      >
-                        <span>
-                          <ImageIcon className="w-4 h-4 mr-1" />
-                          {isUploading ? 'Uploading...' : 'Image'}
-                        </span>
-                      </Button>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleImageUpload(file);
-                          // Reset the input so the same file can be selected again
-                          e.target.value = '';
-                        }}
-                        className="hidden"
-                        disabled={isUploading}
-                      />
-                    </label> */}
-                  </div>
-                </div>
+                <Label className="text-sm font-semibold text-gray-700">
+                  Your Story 📝
+                </Label>
                 <RichTextEditor
                   key="journal-editor" // Stable key to prevent re-mounting
                   value={content}

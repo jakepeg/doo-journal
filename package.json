@@ -4,21 +4,24 @@
   "workspaces": [
     "src/journal_frontend"
   ],
-"scripts": {
-  "dev": "npm run dev --workspace journal_frontend",
-  "start": "npm run start --workspaces --if-present",
-  "build": "npm run build --workspaces --if-present",
-  "prebuild": "npm run prebuild --workspaces --if-present",
-  "deploy": "dfx deploy && npm run update-env",
-  "deploy:ic": "dfx deploy --network ic && npm run update-env",
-  "update-env": "node scripts/update-env.js --force",
-  "test:encryption": "node scripts/test-encryption.js"
-},
+  "scripts": {
+    "dev": "npm run dev --workspace journal_frontend",
+    "start": "npm run start --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "prebuild": "npm run prebuild --workspaces --if-present",
+    "deploy": "dfx deploy && npm run update-env",
+    "deploy:ic": "dfx deploy --network ic && npm run update-env",
+    "update-env": "node scripts/update-env.js --force",
+    "test:encryption": "node scripts/test-encryption.js"
+  },
   "engines": {
     "node": ">=16.0.0",
     "npm": ">=7.0.0"
   },
   "devDependencies": {
     "@types/node": "^24.5.2"
+  },
+  "dependencies": {
+    "quill-emoji": "^0.2.0"
   }
 }
