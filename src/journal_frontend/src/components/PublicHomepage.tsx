@@ -261,7 +261,6 @@ export default function PublicHomepage({ user, onBackToLogin }: PublicHomepagePr
                     className="w-full h-full object-cover"
                   />
                 ) : null}
-                <div className="absolute inset-0 bg-black/20"></div>
               </div>
               <div className="absolute left-6 -bottom-12">
                 <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
